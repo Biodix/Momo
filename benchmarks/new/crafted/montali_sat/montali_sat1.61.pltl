@@ -1,0 +1,1 @@
+F p0 & (G (p0 -> X F p1) & (G (p1 -> X F p2) & (G (p2 -> X F p3) & (G (p3 -> X F p4) & (G (p4 -> X F p5) & (G (p5 -> X F p6) & (G (p6 -> X F p7) & (G (p7 -> X F p8) & (G (p8 -> X F p9) & (G (p9 -> X F p10) & (G (p10 -> X F p11) & G (p11 -> X F p12))))))))))))

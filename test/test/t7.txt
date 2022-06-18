@@ -1,0 +1,1 @@
+G(-x1|Fx2) & GF-z & GFx1 & G(G-x2|F x3) & G(G-x3|F x4) & G(G-x4|z)

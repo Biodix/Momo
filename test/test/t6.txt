@@ -1,0 +1,1 @@
+G(-a|Fb) & G(F-c) & GFa & G(G-b|c)

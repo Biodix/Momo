@@ -1,0 +1,1 @@
+F (p0 & X F (p0 & X F (p0 & X F (p0 & X F p0)))) & ((G (p0 -> X(!p0 U p1)) & (G (p1 -> X(!p1 U p2)) & (G (p2 -> X(!p2 U p3)) & (G (p3 -> X(!p3 U p4)) & (G (p4 -> X(!p4 U p5)) & (G (p5 -> X(!p5 U p6)) & G (p6 -> X(!p6 U p7)))))))) & !F (p7 & X F (p7 & X F (p7 & X F (p7 & X F p7)))))

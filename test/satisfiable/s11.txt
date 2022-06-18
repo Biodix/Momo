@@ -1,0 +1,27 @@
+a
+
+X(X a)
+
+X(X(X(X a)))
+
+X(X(X(X(X(X a)))))
+
+G(a -> ((- b) & (- c)))
+
+G(b -> ((- a) & (- c)))
+
+G(c -> ((- a) & (- b)))
+
+G(a -> (X b))
+
+G(b -> ((X a) | (X c)))
+
+G(c -> (X a))
+
+G(-(c & (X(X(X(X(X(X(X(X(X c)))))))))))
+
+G(-(c & (X(X(X(X(X(X(X(X(X(X(X c)))))))))))))
+
+F(c & (X(X(X(X(X(X(X(X(X(X(X(X(X c))))))))))))))
+
+(b -> (X(X(X(X(X(X(X a)))))))) U (b & (X(X(X(X(X(X(X c))))))))

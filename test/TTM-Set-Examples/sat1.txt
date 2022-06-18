@@ -1,0 +1,1 @@
+(((a U z ) U b ) U c ) U ( - z ) &F z& G a& G b& F (- c)

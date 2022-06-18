@@ -1,0 +1,9 @@
+a
+
+G(a -> (- b))
+
+(X(X a)) U ((X a) U (a U b))
+
+(X a) U (a U b)
+
+a U b
