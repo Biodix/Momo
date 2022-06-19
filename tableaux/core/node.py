@@ -11,14 +11,14 @@ from tableaux.core.cycles import Cycles
 
 class Node:
     def __init__(self, formula=None, eventualities=None, marked_until=None, depth=None, closure=None, cycles=None, sat_solver = None,
-                 operations_stack=None, configuration=None, traces=None):
+                 operations_stack=None, configuration=None, closed_nodes=None, traces=None):
 
         self.set_of_formulae = TlSet()
         self.formulae_operators = {'U': TlSet(), 'R': TlSet(), '&': TlSet(), '|': TlSet(),
                                    'G': TlSet(), 'F': TlSet(), 'X': TlSet(), 'L': TlSet()}
         self.operations_stack = operations_stack if operations_stack else collections.deque()
         self.sat_models_stack = collections.deque()
-
+       
         if type(eventualities) == Eventualities:
             self.eventualities = eventualities
             self.eventualities = eventualities.copy()
@@ -26,7 +26,7 @@ class Node:
         else:
             self.eventualities = Eventualities(eventualities=eventualities, operations_stack=self.operations_stack)
         self.marked_until = marked_until if marked_until else None
-
+        self.closed_nodes = closed_nodes
         self.depth = depth if depth else 0
         self.sat_solver = sat_solver
         if formula:
@@ -39,7 +39,7 @@ class Node:
         if configuration:
             self.configuration = configuration
         else:
-            self.configuration = {'execution_type': 0, 'sat_solver': False, 'non_determinism': False, 'z3': False}
+            self.configuration = {'execution_type': 0, 'sat_solver': True, 'non_determinism': False, 'z3': False}
         self.traces = traces
 
 
@@ -53,7 +53,7 @@ class Node:
 
     def new_node(self):
         new_node = Node(eventualities=self.eventualities, closure=self.closure, cycles=self.cycles,
-                        operations_stack=self.operations_stack, sat_solver=self.sat_solver, configuration=self.configuration, traces=self.traces)
+                        operations_stack=self.operations_stack, closed_nodes=self.closed_nodes, sat_solver=self.sat_solver, configuration=self.configuration, traces=self.traces)
         new_node.cycles.previous_formulae.append(TlSet())
         new_node.cycles.stage_literals.append(TlSet())
         new_node.depth = self.depth
@@ -126,6 +126,7 @@ class Node:
         self.eventualities.update(formula, no_stack)
 
     def rollback(self, next_stage=False):
+        self.closed_nodes.update_closed_nodes(self)
         self.cycles.rollback(next_stage)
         self.remove_formula()
         self.eventualities.rollback()

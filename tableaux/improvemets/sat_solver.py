@@ -306,13 +306,13 @@ class SatSolver:
             g.add_clause(clause)
 
         set_of_formulae_copy = node.set_of_formulae.copy()
-        print(node.formulae_operators)
+        #print(node.formulae_operators)
         operators_in_formulas_copy = copy.deepcopy(node.formulae_operators)
         eventualities_copy = node.eventualities.copy()
         i = 1
         while g.solve():
             model = g.get_model()
-            node.set_of_formulae = set_of_formulae_copy.copy()
+            #node.set_of_formulae = set_of_formulae_copy.copy()
             node.formulae_operators = copy.deepcopy(operators_in_formulas_copy)
             node.set_of_formulae = TlSet()
             node.formulae_operators['|'] = TlSet()
@@ -331,6 +331,7 @@ class SatSolver:
             else:
                 i += 1
                 g.add_clause(model_negation)
+                self.tableau.closed_nodes.update_closed_nodes(node)
         node.eventualities = eventualities_copy
         node.set_of_formulae = set_of_formulae_copy
         node.formulae_operators = operators_in_formulas_copy

@@ -76,7 +76,7 @@ class Rules:
     ##########################################
     # Or Expansion
     ##########################################
-    def or_expansion(self, formula, node):
+    def or_expansion_old(self, formula, node):
         self.traces.path.add_rule('Or expansion')
         self.traces.path.add_selected_formula(formula)
         if '1' in formula[1]:
@@ -90,6 +90,30 @@ class Rules:
             if self.tableau.solve():
                 return True
             node.rollback()
+        return False
+
+    ##########################################
+    # Or Expansion Enhanced
+    ##########################################
+    def or_expansion(self, formula, node):
+        self.traces.path.add_rule('Or expansion')
+        self.traces.path.add_selected_formula(formula)
+        if '1' in formula[1]:
+            return True
+        if (formula[1] & node.set_of_formulae):
+            print("Or simplification")
+            if self.tableau.solve():
+                return True
+        else:
+            for element in formula[1]:
+                if element == '0':
+                    continue
+                if node.contradicts(element):
+                    continue
+                node.update(element)
+                if self.tableau.solve():
+                    return True
+                node.rollback()
         return False
 
     ##########################################
