@@ -8,6 +8,7 @@ from tableaux.core.rules import Rules
 from tableaux.debugging.traces import Trace
 from tableaux.preproccesing.process_formula import process_formula, read_file
 
+
 class Tableau:
     def __init__(self, formula, trace=False, configuration=None):
         # Traces
@@ -16,14 +17,14 @@ class Tableau:
         self.steps = 0
         self.closure = Closure(formula)
 
-
         self.rules = Rules(self, self.closure, self.traces)
 
         # Improvements
         self.closed_nodes = ClosedNodes(5)
         self.sat = SatSolver(self, True, False, False)
 
-        self.node = Node(formula, closure=self.closure, eventualities=self.closure.eventualities, sat_solver=self.sat, closed_nodes=self.closed_nodes, traces=self.traces)
+        self.node = Node(formula, closure=self.closure, eventualities=self.closure.eventualities,
+                         sat_solver=self.sat, closed_nodes=self.closed_nodes,tableau=self, traces=self.traces)
 
         if not configuration:
             self.configuration = {'execution_type': 0, 'sat_solver': False, 'non_determinism': True,
@@ -52,7 +53,8 @@ class Tableau:
             self.traces.print_trace(node, trace_type='domination')
         elif node.is_elemental():
             self.traces.print_trace(node, trace_type='next_stage_1')
-            if self.rules.next_stage(node): return True
+            if self.rules.next_stage(node):
+                return True
         # elif self.configuration['z3'] and node.is_pp_set():
         #     if self.sat.call_z3_sat(node): return True
         # elif self.sat.sat and node.is_quasi_elemental():
@@ -60,25 +62,33 @@ class Tableau:
         else:
             if node.contains_marked_until():
                 formula = node.remove_marked_until()
-                if self.rules.marked_until_expansion(node, formula): return True
+                if self.rules.marked_until_expansion(node, formula):
+                    return True
             elif not node.marked_until and (self.node.have_until() or self.node.have_eventually()):
                 formula = node.get_eventually()
-                if self.rules.select_marked_until_and_expand(node, formula): return True
+                if self.rules.select_marked_until_and_expand(node, formula):
+                    return True
             else:
                 formula = node.pop_formula()
                 self.traces.print_trace(node, formula)
                 if formula.is_and():
-                    if self.rules.and_expansion(formula, node): return True
+                    if self.rules.and_expansion(formula, node):
+                        return True
                 elif formula.is_always():
-                    if self.rules.always_expansion(formula, node): return True
+                    if self.rules.always_expansion(formula, node):
+                        return True
                 elif formula.is_or():
-                    if self.rules.or_expansion(formula, node): return True
+                    if self.rules.or_expansion(formula, node):
+                        return True
                 elif formula.is_release():
-                    if self.rules.release_expansion(formula, node): return True
+                    if self.rules.release_expansion(formula, node):
+                        return True
                 elif formula.is_eventually():
-                    if self.rules.eventually_expansion(formula, node): return True
+                    if self.rules.eventually_expansion(formula, node):
+                        return True
                 elif formula.is_until():
-                    if self.rules.until_expansion(formula, node): return True
+                    if self.rules.until_expansion(formula, node):
+                        return True
                 else:
                     return True
             node.push_formula(formula)
@@ -88,15 +98,17 @@ class Tableau:
         self.steps -= 1
         return False
 
-def test(input_file,trace=False):
-    if '.' in input_file:
-        test_file(input_file,trace)
-    else:
-        test_formula(input_file,trace)
 
-def test_formula(test_formula,trace):
+def test(input_file, trace=False):
+    if '.' in input_file:
+        test_file(input_file, trace)
+    else:
+        test_formula(input_file, trace)
+
+
+def test_formula(test_formula, trace):
     formula = process_formula(test_formula)
-    tableau = Tableau(formula,trace)
+    tableau = Tableau(formula, trace)
     tableau.tableau()
     del tableau
 
@@ -104,9 +116,10 @@ def test_formula(test_formula,trace):
 def test_file(file, trace, line_by_line=True):
     with open(file) as f:
         input_text = f.read()
-        input_text = input_text.replace('\n\n', '\n').replace('\n', '').replace(' ', '')
+        input_text = input_text.replace(
+            '\n\n', '\n').replace('\n', '').replace(' ', '')
     formula = process_formula(input_text)
-    tableau = Tableau(formula,trace)
+    tableau = Tableau(formula, trace)
     tableau.tableau()
 
 
@@ -120,7 +133,7 @@ def execute_file(file, q=None):
     print("End time: ", time.time())
     res = tableau.tableau()
     if q:
-        q.put([file,end_time,res])
+        q.put([file, end_time, res])
 
 
 if __name__ == '__main__':
@@ -135,8 +148,7 @@ if __name__ == '__main__':
     # c ) U ( - z ) &F z& G a& G b& F (- c)') test('(F(- d))&(G(F c))&(G(a -> (X(F e))))&(G(c -> (F a)))&(G((F e) ->
     # d))')
 
-
-    #execute_file('../../benchmarks/crafted/schuppan_O1formula/O1formula200.pltl')
+    # execute_file('../../benchmarks/crafted/schuppan_O1formula/O1formula200.pltl')
 
     execute_file('../../test/antiblack/O1formula8_modified.pltl')
     # test('G(-a|Fe)&G-a&GFa&X(((Fe&-d)&X((-a|(-a|Fe)|(d|G-e))R-a)&a&((-a|(-a|Fe)|(d|G-e))R-a))Ue)&(((Fe&-d)&(

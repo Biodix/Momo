@@ -101,7 +101,6 @@ class Rules:
         if '1' in formula[1]:
             return True
         if (formula[1] & node.set_of_formulae):
-            print("Or simplification")
             if self.tableau.solve():
                 return True
         else:

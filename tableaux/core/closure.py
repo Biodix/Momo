@@ -66,7 +66,13 @@ class Closure:
             self._closure(subformula, closure, eventualities, execution_mode, formulae, n_nnf)
         elif formula.is_always():
             nnf_neg_formula = formula.neg().nnf()
+            next_formula = formula.add_operator('X')
+            nnf_next_formula = nnf_neg_formula.add_operator('X')
             closure[formula] = {'nnf': nnf_neg_formula}
+            closure[next_formula] = {'nnf': nnf_next_formula}
+            closure[nnf_neg_formula] = {'nnf': formula}
+            closure[nnf_next_formula] = {'nnf': next_formula}
+
             if execution_mode != 0:
                 closure[nnf_neg_formula] = {'nnf': formula}
                 closure[nnf_neg_formula.add_operator('X')] = {'nnf': formula.add_operator('X')}
@@ -77,6 +83,12 @@ class Closure:
                 self.formula_to_sat[nnf_neg_formula] = str(-i)
                 self.sat_to_formula[str(i)] = formula
                 self.sat_to_formula[str(-i)] = nnf_neg_formula
+                i += 1
+            if next_formula not in self.formula_to_sat:
+                self.formula_to_sat[next_formula] = str(i)
+                self.formula_to_sat[nnf_next_formula] = str(-i)
+                self.sat_to_formula[str(i)] = next_formula
+                self.sat_to_formula[str(-i)] = nnf_next_formula
                 i += 1
 
             self._closure(formula[1], closure, eventualities, execution_mode, formulae, n_nnf)

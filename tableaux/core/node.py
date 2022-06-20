@@ -11,7 +11,7 @@ from tableaux.core.cycles import Cycles
 
 class Node:
     def __init__(self, formula=None, eventualities=None, marked_until=None, depth=None, closure=None, cycles=None, sat_solver = None,
-                 operations_stack=None, configuration=None, closed_nodes=None, traces=None):
+                 operations_stack=None, configuration=None, closed_nodes=None, tableau=None, traces=None):
 
         self.set_of_formulae = TlSet()
         self.formulae_operators = {'U': TlSet(), 'R': TlSet(), '&': TlSet(), '|': TlSet(),
@@ -29,6 +29,7 @@ class Node:
         self.closed_nodes = closed_nodes
         self.depth = depth if depth else 0
         self.sat_solver = sat_solver
+        self.tableau = tableau
         if formula:
             self.closure = closure if closure else Closure(formula)
             self.cycles = cycles if cycles else Cycles(formula, self.operations_stack)
@@ -53,7 +54,7 @@ class Node:
 
     def new_node(self):
         new_node = Node(eventualities=self.eventualities, closure=self.closure, cycles=self.cycles,
-                        operations_stack=self.operations_stack, closed_nodes=self.closed_nodes, sat_solver=self.sat_solver, configuration=self.configuration, traces=self.traces)
+                        operations_stack=self.operations_stack, tableau=self.tableau, closed_nodes=self.closed_nodes, sat_solver=self.sat_solver, configuration=self.configuration, traces=self.traces)
         new_node.cycles.previous_formulae.append(TlSet())
         new_node.cycles.stage_literals.append(TlSet())
         new_node.depth = self.depth
@@ -71,11 +72,11 @@ class Node:
             return False
 
     def issubset_enhanced(self, set_of_formulae2):
-        if self.sat_solver.z3:
+        if True:
             set_of_formulae1 = self.set_of_formulae
-            if set_of_formulae1.issubset(set_of_formulae2):
-                if self.sat_solver.z3_implication(set_of_formulae1, set_of_formulae2):
-                    return True
+            #if set_of_formulae1.issubset(set_of_formulae2):
+            if self.sat_solver.z3_implication(set_of_formulae1, set_of_formulae2):
+                return True
             return False
         else:
             return self.set_of_formulae.issubset(set_of_formulae2)
