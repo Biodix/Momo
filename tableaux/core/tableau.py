@@ -24,7 +24,7 @@ class Tableau:
         self.sat = SatSolver(self, True, False, False)
 
         self.node = Node(formula, closure=self.closure, eventualities=self.closure.eventualities,
-                         sat_solver=self.sat, closed_nodes=self.closed_nodes,tableau=self, traces=self.traces)
+                         sat_solver=self.sat, closed_nodes=self.closed_nodes, tableau=self, traces=self.traces)
 
         if not configuration:
             self.configuration = {'execution_type': 0, 'sat_solver': False, 'non_determinism': True,
@@ -51,14 +51,15 @@ class Tableau:
         elif '0' in node.set_of_formulae:
             self.rules.zero()
             self.traces.print_trace(node, trace_type='domination')
+        elif self.sat.sat and node.is_quasi_elemental():
+            if self.sat.call_z3_sat(node):
+                return True
         elif node.is_elemental():
             self.traces.print_trace(node, trace_type='next_stage_1')
             if self.rules.next_stage(node):
                 return True
         # elif self.configuration['z3'] and node.is_pp_set():
         #     if self.sat.call_z3_sat(node): return True
-        # elif self.sat.sat and node.is_quasi_elemental():
-        #     if self.sat.call_sat(node): return True
         else:
             if node.contains_marked_until():
                 formula = node.remove_marked_until()

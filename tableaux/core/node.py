@@ -10,7 +10,7 @@ from tableaux.core.cycles import Cycles
 
 
 class Node:
-    def __init__(self, formula=None, eventualities=None, marked_until=None, depth=None, closure=None, cycles=None, sat_solver = None,
+    def __init__(self, formula=None, eventualities=None, marked_until=None, depth=None, closure=None, cycles=None, sat_solver=None,
                  operations_stack=None, configuration=None, closed_nodes=None, tableau=None, traces=None):
 
         self.set_of_formulae = TlSet()
@@ -18,13 +18,14 @@ class Node:
                                    'G': TlSet(), 'F': TlSet(), 'X': TlSet(), 'L': TlSet()}
         self.operations_stack = operations_stack if operations_stack else collections.deque()
         self.sat_models_stack = collections.deque()
-       
+
         if type(eventualities) == Eventualities:
             self.eventualities = eventualities
             self.eventualities = eventualities.copy()
             self.eventualities.stage_eventualities = TlSet()
         else:
-            self.eventualities = Eventualities(eventualities=eventualities, operations_stack=self.operations_stack)
+            self.eventualities = Eventualities(
+                eventualities=eventualities, operations_stack=self.operations_stack)
         self.marked_until = marked_until if marked_until else None
         self.closed_nodes = closed_nodes
         self.depth = depth if depth else 0
@@ -32,7 +33,8 @@ class Node:
         self.tableau = tableau
         if formula:
             self.closure = closure if closure else Closure(formula)
-            self.cycles = cycles if cycles else Cycles(formula, self.operations_stack)
+            self.cycles = cycles if cycles else Cycles(
+                formula, self.operations_stack)
             self.update(formula)
         else:
             self.closure = closure
@@ -40,10 +42,9 @@ class Node:
         if configuration:
             self.configuration = configuration
         else:
-            self.configuration = {'execution_type': 0, 'sat_solver': True, 'non_determinism': False, 'z3': False}
+            self.configuration = {
+                'execution_type': 0, 'sat_solver': True, 'non_determinism': False, 'z3': False}
         self.traces = traces
-
-
 
     def __del__(self):
         self.cycles.previous_formulae.pop()
@@ -74,7 +75,7 @@ class Node:
     def issubset_enhanced(self, set_of_formulae2):
         if True:
             set_of_formulae1 = self.set_of_formulae
-            #if set_of_formulae1.issubset(set_of_formulae2):
+            # if set_of_formulae1.issubset(set_of_formulae2):
             if self.sat_solver.z3_implication(set_of_formulae1, set_of_formulae2):
                 return True
             return False
@@ -156,7 +157,7 @@ class Node:
     # TODO: aun hay que determinar que hacer con el quasi elemental
     def is_quasi_elemental(self):
         return (len(self.formulae_operators['X']) + len(self.formulae_operators['L']) + len(
-            self.formulae_operators['|']) == len(self.set_of_formulae)) and len(self.formulae_operators['|']) > 0
+            self.formulae_operators['|']) == len(self.set_of_formulae)) and len(self.formulae_operators['|']) > 0 and len(self.formulae_operators['|'].tl_set) == 0
 
     def is_quasi_elemental2(self):
         return len(self.formulae_operators['X']) + len(self.set_of_formulae.pp_set) == len(self.set_of_formulae)
@@ -192,41 +193,53 @@ class Node:
         else:
             if self.configuration['z3']:
                 if self.formulae_operators['U']:
-                    selected_formula = random.sample(self.formulae_operators['U'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['U'], 1)[0]
                     self.formulae_operators['U'].remove(selected_formula)
                 elif self.formulae_operators['F']:
-                    selected_formula = random.sample(self.formulae_operators['F'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['F'], 1)[0]
                     self.formulae_operators['F'].remove(selected_formula)
                 elif self.formulae_operators['G']:
-                    selected_formula = random.sample(self.formulae_operators['G'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['G'], 1)[0]
                     self.formulae_operators['G'].remove(selected_formula)
                 elif self.formulae_operators['R']:
-                    selected_formula = random.sample(self.formulae_operators['R'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['R'], 1)[0]
                     self.formulae_operators['R'].remove(selected_formula)
                 elif self.formulae_operators['&']:
-                    selected_formula = random.sample(self.formulae_operators['&'].tl_set, 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['&'].tl_set, 1)[0]
                     self.formulae_operators['&'].remove(selected_formula)
                 else:
-                    selected_formula = random.sample(self.formulae_operators['|'].tl_set, 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['|'].tl_set, 1)[0]
                     self.formulae_operators['|'].remove(selected_formula)
             elif self.configuration['non_determinism']:
                 if self.formulae_operators['U']:
-                    selected_formula = random.sample(self.formulae_operators['U'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['U'], 1)[0]
                     self.formulae_operators['U'].remove(selected_formula)
                 elif self.formulae_operators['F']:
-                    selected_formula = random.sample(self.formulae_operators['F'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['F'], 1)[0]
                     self.formulae_operators['F'].remove(selected_formula)
                 elif self.formulae_operators['&']:
-                    selected_formula = random.sample(self.formulae_operators['&'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['&'], 1)[0]
                     self.formulae_operators['&'].remove(selected_formula)
                 elif self.formulae_operators['G']:
-                    selected_formula = random.sample(self.formulae_operators['G'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['G'], 1)[0]
                     self.formulae_operators['G'].remove(selected_formula)
                 elif self.formulae_operators['R']:
-                    selected_formula = random.sample(self.formulae_operators['R'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['R'], 1)[0]
                     self.formulae_operators['R'].remove(selected_formula)
                 else:
-                    selected_formula = random.sample(self.formulae_operators['|'], 1)[0]
+                    selected_formula = random.sample(
+                        self.formulae_operators['|'], 1)[0]
                     self.formulae_operators['|'].remove(selected_formula)
             else:
                 if self.formulae_operators['U']:
@@ -254,7 +267,8 @@ class Node:
         if self.eventualities.remaining:
             if self.configuration['non_determinism']:
                 ev = random.sample(self.eventualities.remaining, 1)[0]
-                selected_formula = random.sample(self.eventualities.eventualities[ev], 1)[0]
+                selected_formula = random.sample(
+                    self.eventualities.eventualities[ev], 1)[0]
             else:
                 ev = self.eventualities.remaining.pop()
                 selected_formula = self.eventualities.eventualities[ev].pop()
@@ -271,7 +285,8 @@ class Node:
             if self.configuration['non_determinism']:
                 selected_formula = self.formulae_operators[operator].pop()
             else:
-                selected_formula = random.sample(self.formulae_operators[operator], 1)[0]
+                selected_formula = random.sample(
+                    self.formulae_operators[operator], 1)[0]
                 self.formulae_operators[operator].remove(selected_formula)
         self.set_of_formulae.remove(selected_formula)
         return selected_formula
