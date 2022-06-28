@@ -101,6 +101,9 @@ class Formula(tuple):
 
     def contains_false(self):
         return '0' in self
+    
+    def xnf(self):
+        return _xnf(self)
 
 
 class Atom(str):
@@ -144,6 +147,10 @@ class Atom(str):
     @staticmethod
     def is_always():
         return False
+    
+    @staticmethod
+    def is_next():
+        return False
 
     @staticmethod
     def is_next_always():
@@ -152,6 +159,7 @@ class Atom(str):
     @staticmethod
     def have_always():
         return False
+
 
     @staticmethod
     def operator():
@@ -166,6 +174,33 @@ class Atom(str):
         else:
             return Formula((operator, self))
 
+def _xnf(formula):
+    subformula = formula[1]
+    if subformula.is_atom():
+        return Formula(('X', subformula))
+    elif subformula.is_next():
+        return Formula(('X', subformula))
+    elif subformula.is_always():
+        return Formula(('X', subformula))
+    elif subformula.is_eventually():
+        return Formula(('X', subformula))
+    elif subformula.is_until():
+        return Formula(('X', subformula))
+    elif subformula.is_release():
+        return Formula(('X', subformula))
+    elif subformula.is_and():
+        return _xnf_and_or('&',subformula)
+    elif subformula.is_or():
+        return _xnf_and_or('|',subformula)
+
+def _xnf_and_or(symbol, subformula):
+    aux = []
+    for sf in subformula[1]:
+        aux.append(_xnf(('X',sf)))
+    if len(aux) == 1:
+        return Atom(aux[0])
+    else:
+        return Formula((symbol, frozenset(aux)))
 
 def _nnf(formula):
     """
@@ -264,9 +299,12 @@ def _nnf_iff(subformula, negate):
 
 
 if __name__ == '__main__':
-    subformula = Formula(('->', Formula(('F', Atom('e'))), Atom('d')))
-    s2 = subformula.nnf()
+    # subformula = Formula(('->', Formula(('F', Atom('e'))), Atom('d')))
+    #s2 = subformula.nnf()
 
     # a = Formula(('|', frozenset([_nnf(subformula[1].neg()), _nnf(subformula[2])])))
-    print(s2.type)
+    
+    # print(s2.type)
+    s2 = Formula(('X',Formula(('&',frozenset([Formula(('|',frozenset([Atom('a'),Formula(('X','b'))]))),Atom('c')])))))
     print(s2)
+    print(s2.xnf())

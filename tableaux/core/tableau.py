@@ -31,12 +31,14 @@ class Tableau:
                                   'closed_nodes': ClosedNodes(5), 'z3': True}
 
     def tableau(self):
-        if self.solve():
+        sat, proof = self.solve()
+        if sat:
             self.traces.print_path()
-            print('Model Found')
+            print('Satisfiable')
             return 1
         else:
-            print('Model not found')
+            print(proof)
+            print('Unsatisfiable')
             return 0
 
     def solve(self):
@@ -48,56 +50,70 @@ class Tableau:
         if self.closed_nodes.is_closed(node):
             self.rules.closed_node()
             self.traces.print_trace(node, trace_type='closed_node')
+            return False, ('closed_node','closed_node' , node.set_of_formulae.copy(), 'closed_node')
         elif '0' in node.set_of_formulae:
             self.rules.zero()
             self.traces.print_trace(node, trace_type='domination')
+            return False, ('false','false' , node.set_of_formulae.copy(), False)
         elif self.sat.sat and node.is_quasi_elemental():
-            if self.sat.call_z3_sat(node):
-                return True
+            ##TODO: puede que haya que añadir algo al path
+            if self.traces.traces:
+                print("SAT Elementary")
+            sat, proof = self.sat.call_sat(node)
+            if sat:
+                return True, 1
         elif node.is_elemental():
             self.traces.print_trace(node, trace_type='next_stage_1')
-            if self.rules.next_stage(node):
-                return True
-        # elif self.configuration['z3'] and node.is_pp_set():
-        #     if self.sat.call_z3_sat(node): return True
+            sat, proof = self.rules.next_stage(node)
+            if sat:
+                return True, 1
         else:
             if node.contains_marked_until():
                 formula = node.remove_marked_until()
-                if self.rules.marked_until_expansion(node, formula):
-                    return True
+                sat, proof = self.rules.marked_until_expansion(node, formula)
+                if sat:
+                    return True, 1
             elif not node.marked_until and (self.node.have_until() or self.node.have_eventually()):
                 formula = node.get_eventually()
-                if self.rules.select_marked_until_and_expand(node, formula):
-                    return True
+                sat, proof = self.rules.select_marked_until_and_expand(node, formula)
+                if sat:
+                    return True, 1
+
             else:
                 formula = node.pop_formula()
                 self.traces.print_trace(node, formula)
                 if formula.is_and():
-                    if self.rules.and_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.and_expansion(formula, node)
+                    if sat:
+                        return True, 1
                 elif formula.is_always():
-                    if self.rules.always_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.always_expansion(formula, node)
+                    if sat:
+                        return True, 1
                 elif formula.is_or():
-                    if self.rules.or_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.or_expansion(formula, node)
+                    if sat:
+                        return True, 1
                 elif formula.is_release():
-                    if self.rules.release_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.release_expansion(formula, node)
+                    if sat:
+                        return True, 1
                 elif formula.is_eventually():
-                    if self.rules.eventually_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.eventually_expansion(formula, node)
+                    if sat:
+                        return True, 1                    
                 elif formula.is_until():
-                    if self.rules.until_expansion(formula, node):
-                        return True
+                    sat, proof = self.rules.until_expansion(formula, node)
+                    if sat:
+                        return True, 1
                 else:
-                    return True
+                    return True, 1
             node.push_formula(formula)
         self.traces.pop_path()
         self.traces.close(node.depth)
         node.depth -= 1
         self.steps -= 1
-        return False
+        return False, proof
 
 
 def test(input_file, trace=False):

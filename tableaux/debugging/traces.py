@@ -8,22 +8,41 @@ class Path:
         self.selected_formulae = []
 
     def add_step(self, step):
-        self.path.append(step.set_of_formulae.copy())
+        pass
 
     def pop_step(self):
-        self.path.pop()
+        pass
 
     def add_rule(self, rule):
-        self.rules.append(rule)
+        pass
 
     def pop_rule(self):
-        self.rules.pop()
+        pass
 
     def add_selected_formula(self, selected_formula):
-        self.selected_formulae.append(selected_formula)
+        pass
 
     def pop_selected_formula(self):
-        self.selected_formulae.pop()
+        pass
+
+####################### BACKUP #########################
+    # def add_step(self, step):
+    #     self.path.append(step.set_of_formulae.copy())
+
+    # def pop_step(self):
+    #     self.path.pop()
+
+    # def add_rule(self, rule):
+    #     self.rules.append(rule)
+
+    # def pop_rule(self):
+    #     self.rules.pop()
+
+    # def add_selected_formula(self, selected_formula):
+    #     self.selected_formulae.append(selected_formula)
+
+    # def pop_selected_formula(self):
+    #     self.selected_formulae.pop()
 
 
 class Trace:
@@ -31,7 +50,7 @@ class Trace:
         self.traces = traces
         self.path = Path()
         self.line_by_line = line_by_line
-        self.colors = {
+        self.colors2 = {
             'white': '\u001b[37m',
             'black': '\u001b[30m',
             'red': '\u001b[31m',
@@ -48,7 +67,7 @@ class Trace:
             'reset': '\u001b[0m'
         }
 
-        self.backgrounds = {
+        self.backgrounds2 = {
             'black': '\u001b[40;1m',
             'white': '\u001b[47;1m',
             'grey': '\u001b[48;5;239m',
@@ -60,8 +79,41 @@ class Trace:
             'cyan': '\u001b[46;1m',
             'reset': '\u001b[0m'
         }
-        self.reset = '\u001b[0m'
+        self.reset2 = '\u001b[0m'
 
+
+        self.colors = {
+            'white': '',
+            'black': '',
+            'red': '',
+            'green': '',
+            'blue': '',
+            'yellow': '',
+            'magenta': '',
+            'pink': '',
+            'cyan': '',
+            'bright_green': '',
+            'dark_yellow': '',
+            'bright_blue': '',
+            'dark_blue': '',
+            'reset': ''
+        }
+
+        self.backgrounds = {
+            'black': '',
+            'white': '',
+            'grey': '',
+            'red': '',
+            'green': '',
+            'yellow': '',
+            'blue': '',
+            'magenta': '',
+            'cyan': '',
+            'reset': ''
+        }
+        self.reset = ''
+
+    #TODO: Fix model print
     def print_model(self, node):
         i = 0
         found = False
@@ -80,7 +132,9 @@ class Trace:
         node.cycles.stage_literals.append(sl)
         print('\nCycle starts at stage {}'.format(cycle_start))
 
+    # TODO: CUIDADO CON ESTE COMENTARIO, HAY QUE ARREGLARLO
     def pop_path(self):
+        return
         self.path.path.pop()
         self.path.rules.pop()
         self.path.selected_formulae.pop()
@@ -116,7 +170,7 @@ class Trace:
                     fulfilled_eventualities.add(self.prefix_to_infix(f))
                 self.print('Remaining eventualities: {}\nFulfilled eventualities: {}'
                            .format(remaining_eventualities, fulfilled_eventualities), 'blue')
-                self.print('Eventualities: {}'.format(self.prefix_to_infix_set(node.eventualities.eventualities)), 'blue')
+                #self.print('Eventualities: {}'.format(self.prefix_to_infix_set(node.eventualities.eventualities)), 'blue')
                 self.print('Set of formulae:', 'yellow')
                 if self.line_by_line:
                     for f in infix_set:

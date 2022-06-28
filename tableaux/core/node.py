@@ -5,6 +5,7 @@ import copy
 from itertools import islice
 from tableaux.core.eventualities import Eventualities
 from tableaux.core.closure import Closure
+from tableaux.tl_basics.formula import Formula, Atom
 from tableaux.tl_basics.tl_set import TlSet
 from tableaux.core.cycles import Cycles
 
@@ -61,6 +62,32 @@ class Node:
         new_node.depth = self.depth
         new_node.marked_until = self.marked_until
         return new_node
+
+    #TODO: Terminar esto
+    def marked_until_subsumtion(self):
+        new_until = []
+        if self.marked_until:
+            if self.marked_until[1].is_and():
+                for or_formula in self.marked_until[1][1]:
+                    if or_formula.nnf() in self.set_of_formulae:
+                        continue
+                    else:
+                        new_until.append(or_formula)
+            elif self.marked_until[1].is_or():
+                if self.marked_until[1].nnf() in self.set_of_formulae:
+                    pass
+                else:
+                    new_until.append(self.marked_until[1])
+            if new_until:
+                if len(new_until) == 1:
+                    return ('U',new_until[0],self.marked_until[2])
+                else:
+                    return ('U',('&',frozenset(new_until)),self.marked_until[2])
+            else:
+                new_until = Atom('0')
+
+                        
+
 
     def contains_cycle_copy(self):
         if self.eventualities.remaining:
@@ -156,8 +183,13 @@ class Node:
 
     # TODO: aun hay que determinar que hacer con el quasi elemental
     def is_quasi_elemental(self):
-        return (len(self.formulae_operators['X']) + len(self.formulae_operators['L']) + len(
-            self.formulae_operators['|']) == len(self.set_of_formulae)) and len(self.formulae_operators['|']) > 0 and len(self.formulae_operators['|'].tl_set) == 0
+        if (len(self.formulae_operators['X']) + len(self.formulae_operators['L']) + len(
+            self.formulae_operators['|']) == len(self.set_of_formulae)) and len(self.formulae_operators['|']) > 0:
+            for or_formula in self.formulae_operators['|']:
+                for or_element in or_formula[1]:
+                    if not(or_element.is_next() or or_element.is_atom()):
+                        return False
+            return True
 
     def is_quasi_elemental2(self):
         return len(self.formulae_operators['X']) + len(self.set_of_formulae.pp_set) == len(self.set_of_formulae)

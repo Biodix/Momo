@@ -85,9 +85,10 @@ def test_black():
 # test_black()
 
 if __name__ == '__main__':
-    input_file = "benchmarks/new/application/alaska_lift/lift_3.pltl"
-    # input_file = "benchmarks/new/application/acacia_demo_v3/demo-v3_1.pltl"
+    # input_file = "benchmarks/new/crafted/schuppan_phltl/phltl_3_2.pltl"
+    # input_file = "benchmarks/new/crafted/rozier_counter/counter3.pltl"
+    input_file = "benchmarks/new/application/alaska_lift/lift_2.pltl"
     # input_file = "G a & X(X(!a)) & Fc"
-    trace=True
+    trace=False
     with recursionlimit():
         tb.test(input_file, trace)

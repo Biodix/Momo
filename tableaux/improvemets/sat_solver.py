@@ -4,7 +4,7 @@ from tableaux.tl_basics.tl_set import TlSet
 import z3
 
 class SatSolver:
-    def __init__(self, tableau, sat=False, z3=False, get_model=True):
+    def __init__(self, tableau, sat=True, z3=False, get_model=True):
         self.tableau = tableau
         self.sat = sat
         self.z3 = z3
@@ -123,6 +123,117 @@ class SatSolver:
             g.add_clause(clause)
         return g
 
+    def call_sat(self, node):
+        traces = node.traces
+
+        traces.path.add_rule('Sat-Solver')
+        traces.path.add_selected_formula('')
+        traces.sat_trace(node)
+
+        closure = node.closure.closure
+        g = Glucose4()
+        formula_to_sat = {}
+        sat_to_formula = {}
+        sat_index = 0
+        formulae = TlSet()
+        proof=('no_model','no_model' , node.set_of_formulae, 'no_model')
+        for formula in node.formulae_operators['|']:
+            clause = []
+            for subformula in formula[1]:
+                if subformula == '1':
+                    break
+                elif subformula == '0':
+                    continue
+                elif subformula in formula_to_sat:
+                    clause.append(formula_to_sat[subformula])
+                else:
+                    if subformula in closure:
+                        nnf_subformula = closure[subformula]['nnf']
+                    else:
+                        nnf_subformula = subformula.neg().nnf()
+                    if nnf_subformula in formula_to_sat:
+                        clause.append(-formula_to_sat[nnf_subformula])
+                    else:
+                        sat_index += 1
+                        formula_to_sat[subformula] = sat_index
+                        formula_to_sat[nnf_subformula] = -sat_index
+                        sat_to_formula[sat_index] = subformula
+                        sat_to_formula[-sat_index] = nnf_subformula
+                        clause.append(sat_index)
+                formulae.add(subformula)
+            g.add_clause(clause)
+        for formula in node.formulae_operators['X']:
+            clause = []
+            if formula in formula_to_sat:
+                clause.append(formula_to_sat[formula])
+            else:
+                if formula in closure:
+                    nnf_formula = closure[formula]['nnf']
+                else:
+                    nnf_formula = formula.neg().nnf()
+                if nnf_formula in formula_to_sat:
+                    clause.append(-formula_to_sat[nnf_formula])
+                else:
+                    sat_index += 1
+                    formula_to_sat[formula] = sat_index
+                    formula_to_sat[nnf_formula] = -sat_index
+                    sat_to_formula[sat_index] = formula
+                    sat_to_formula[-sat_index] = nnf_formula
+                    clause.append(sat_index)
+            formulae.add(formula)
+            g.add_clause(clause)
+        for literal in node.formulae_operators['L']:
+            clause = []
+            if literal in formula_to_sat:
+                clause.append(formula_to_sat[literal])
+            elif closure[literal]['nnf'] in formula_to_sat:
+                clause.append(-formula_to_sat[closure[literal]['nnf']])
+            else:
+                sat_index += 1
+                formula_to_sat[literal] = sat_index
+                formula_to_sat[closure[literal]['nnf']] = -sat_index
+                sat_to_formula[sat_index] = literal
+                sat_to_formula[-sat_index] = closure[literal]['nnf']
+                clause.append(sat_index)
+            formulae.add(literal)
+            g.add_clause(clause)
+
+        set_of_formulae_copy = node.set_of_formulae.copy()
+        #print(node.formulae_operators)
+        operators_in_formulas_copy = copy.deepcopy(node.formulae_operators)
+        eventualities_copy = node.eventualities.copy()
+        i = 1
+        while g.solve():
+            model = g.get_model()
+            #node.set_of_formulae = set_of_formulae_copy.copy()
+            node.formulae_operators = copy.deepcopy(operators_in_formulas_copy)
+            node.set_of_formulae = TlSet()
+            node.formulae_operators['|'] = TlSet()
+            node.formulae_operators['L'] = TlSet()
+            node.formulae_operators['X'] = TlSet()
+            node.eventualities = eventualities_copy.copy()
+            model_negation = []
+            for sat_formula in model:
+                formula = sat_to_formula[sat_formula]
+                model_negation.append(-sat_formula)
+                if formula in formulae:
+                    node.update(formula, True)
+            traces.sat_trace_i(node, set_of_formulae_copy, i)
+            sat, proof = self.tableau.solve()
+            if sat:
+                return True, 1
+            else:
+                i += 1
+                g.add_clause(model_negation)
+                self.tableau.closed_nodes.update_closed_nodes(node)
+        node.eventualities = eventualities_copy
+        node.set_of_formulae = set_of_formulae_copy
+        node.formulae_operators = operators_in_formulas_copy
+        traces.path.add_rule('SAT-Solver fail')
+        traces.path.add_selected_formula('')
+        # print(debugging_set)
+        return False, proof
+
     def call_sat_no_model(self, node):
         traces = node.traces
         closure = node.closure.closure
@@ -151,25 +262,28 @@ class SatSolver:
         traces.path.add_selected_formula('')
         traces.sat_trace(node)
         z = z3.Solver()
-        if len(node.set_of_formulae.pp_set) <= 1:
-            z.add(self.z3_sat_translation(next(iter(node.set_of_formulae.pp_set))))
+        proof = ('no_model','no_model' , node.set_of_formulae, 'no_model')
+        if len(node.set_of_formulae) <= 1:
+            z.add(self.z3_sat_translation(next(iter(node.set_of_formulae))))
             node.sat_models_stack.append(z)
-            if self.tableau.rules.next_stage(node):
-                return True
+            sat, proof = self.tableau.rules.next_stage(node)
+            if sat:
+                return True, 1
             node.sat_models_stack.pop()
-            return False
+            return False, proof
 
         z3_translated_formulae = []
-        for formula in node.set_of_formulae.pp_set:
+        for formula in node.set_of_formulae:
             z3_translated_formulae.append(self.z3_sat_translation(formula))
         z3_formula = z3.And(z3_translated_formulae)
         z.add(z3_formula)
         if z.check().r != -1:
             node.sat_models_stack.append(z)
-            if self.tableau.rules.next_stage(node):
-                return True
+            sat, proof = self.tableau.rules.next_stage(node)
+            if sat:
+                return True, 1
             node.sat_models_stack.pop()
-        return False
+        return False, proof
 
 def call_z3_sat_enhanced(self, node):
     traces = node.traces
@@ -260,115 +374,7 @@ def call_z3_sat_enhanced(self, node):
             node.sat_models_stack.pop()
         return False
 
-    def call_sat(self, node):
-        traces = node.traces
 
-        traces.path.add_rule('Sat-Solver')
-        traces.path.add_selected_formula('')
-        traces.sat_trace(node)
-
-        closure = node.closure.closure
-        g = Glucose4()
-        formula_to_sat = {}
-        sat_to_formula = {}
-        sat_index = 0
-        formulae = TlSet()
-
-        for formula in node.formulae_operators['|']:
-            clause = []
-            for subformula in formula[1]:
-                if subformula == '1':
-                    break
-                elif subformula == '0':
-                    continue
-                elif subformula in formula_to_sat:
-                    clause.append(formula_to_sat[subformula])
-                else:
-                    if subformula in closure:
-                        nnf_subformula = closure[subformula]['nnf']
-                    else:
-                        nnf_subformula = subformula.neg().nnf()
-                    if nnf_subformula in formula_to_sat:
-                        clause.append(-formula_to_sat[nnf_subformula])
-                    else:
-                        sat_index += 1
-                        formula_to_sat[subformula] = sat_index
-                        formula_to_sat[nnf_subformula] = -sat_index
-                        sat_to_formula[sat_index] = subformula
-                        sat_to_formula[-sat_index] = nnf_subformula
-                        clause.append(sat_index)
-                formulae.add(subformula)
-            g.add_clause(clause)
-        for formula in node.formulae_operators['X']:
-            clause = []
-            if formula in formula_to_sat:
-                clause.append(formula_to_sat[formula])
-            else:
-                if formula in closure:
-                    nnf_formula = closure[formula]['nnf']
-                else:
-                    nnf_formula = formula.neg().nnf()
-                if nnf_formula in formula_to_sat:
-                    clause.append(-formula_to_sat[nnf_formula])
-                else:
-                    sat_index += 1
-                    formula_to_sat[formula] = sat_index
-                    formula_to_sat[nnf_formula] = -sat_index
-                    sat_to_formula[sat_index] = formula
-                    sat_to_formula[-sat_index] = nnf_formula
-                    clause.append(sat_index)
-            formulae.add(formula)
-            g.add_clause(clause)
-        for literal in node.formulae_operators['L']:
-            clause = []
-            if literal in formula_to_sat:
-                clause.append(formula_to_sat[literal])
-            elif closure[literal]['nnf'] in formula_to_sat:
-                clause.append(-formula_to_sat[closure[literal]['nnf']])
-            else:
-                sat_index += 1
-                formula_to_sat[literal] = sat_index
-                formula_to_sat[closure[literal]['nnf']] = -sat_index
-                sat_to_formula[sat_index] = literal
-                sat_to_formula[-sat_index] = closure[literal]['nnf']
-                clause.append(sat_index)
-            formulae.add(literal)
-            g.add_clause(clause)
-
-        set_of_formulae_copy = node.set_of_formulae.copy()
-        #print(node.formulae_operators)
-        operators_in_formulas_copy = copy.deepcopy(node.formulae_operators)
-        eventualities_copy = node.eventualities.copy()
-        i = 1
-        while g.solve():
-            model = g.get_model()
-            #node.set_of_formulae = set_of_formulae_copy.copy()
-            node.formulae_operators = copy.deepcopy(operators_in_formulas_copy)
-            node.set_of_formulae = TlSet()
-            node.formulae_operators['|'] = TlSet()
-            node.formulae_operators['L'] = TlSet()
-            node.formulae_operators['X'] = TlSet()
-            node.eventualities = eventualities_copy.copy()
-            model_negation = []
-            for sat_formula in model:
-                formula = sat_to_formula[sat_formula]
-                model_negation.append(-sat_formula)
-                if formula in formulae:
-                    node.update(formula, True)
-            traces.sat_trace_i(node, set_of_formulae_copy, i)
-            if self.tableau.solve():
-                return True
-            else:
-                i += 1
-                g.add_clause(model_negation)
-                self.tableau.closed_nodes.update_closed_nodes(node)
-        node.eventualities = eventualities_copy
-        node.set_of_formulae = set_of_formulae_copy
-        node.formulae_operators = operators_in_formulas_copy
-        traces.path.add_rule('SAT-Solver fail')
-        traces.path.add_selected_formula('')
-        # print(debugging_set)
-        return False
 
 
 #
