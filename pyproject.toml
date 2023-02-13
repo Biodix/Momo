@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "momo"
+version = "0.0.1"
+description = "Context based one pass tableaux"
+authors = ["daniel <cervera1994@gmail.com>"]
+
+packages = [
+{include = "momo", from = "src"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+z3-solver = "^4.0.0"
+mypy = "^0.991"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.0"
+flake8 = "3.9.2"
+tox = "^3.24.5"
+coverage = "^6.3.2"
+
+[tool.poetry.group.dev.dependencies]
+black = {version = "^22.10.0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = True
+
+[flake8]
+max-line-length = 88
+exclude = .git,
+	__pycache__,
+	docs
+
+[pytest]
+testpaths = tests
+
+[isort]
+line_length = 88
+"""

@@ -1,0 +1,18 @@
+### PYTHON ###
+__pycache__/
+*.py[cod]
+build/
+_build/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+venv/
+.venv/
+
+### EDITOR SETTINGS ###
+.vscode/
+.idea/
+
+### Testing and coverage ###
+.coverage
