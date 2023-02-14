@@ -18,3 +18,16 @@ def test_tl_set():
     print(tl_set)
     tl_set.remove(Atom('a'))
     assert True
+
+
+def test_next_stage():
+    tl_set = TlSet()
+    tl_set.add(Atom('a'))
+    tl_set.add(Formula(('X', Atom('b'))))
+    tl_set.add(Formula(('X', Atom('c'))))
+
+    tl_set_res = TlSet()
+    tl_set_res.add(Atom('b'))
+    tl_set_res.add(Atom('c'))
+    next_stage = tl_set.next_stage()
+    assert next_stage == tl_set_res
