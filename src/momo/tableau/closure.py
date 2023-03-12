@@ -13,9 +13,16 @@ class SatTable:
 
 
 class Closure(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.sat_table = SatTable()
+
+    def __init__(self, formula=None):
         self.sat_table = SatTable()
+        if formula:
+            self._closure(formula)
+        else:
+            super().__init__()
 
     def build_closure(self, formula):
         self._closure(formula)

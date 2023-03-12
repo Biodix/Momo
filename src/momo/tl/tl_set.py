@@ -1,4 +1,6 @@
 from momo.tl.formula import Formula, Atom
+import copy
+from multiset import Multiset
 
 
 def classify_formula_by_operator(formula, operators):
@@ -8,10 +10,10 @@ def classify_formula_by_operator(formula, operators):
         operators['L'] = formula
 
 
-class TlSet(set):
+class TlSet(Multiset):
     def __init__(self, itr=None):
-        self.operators = {'U': set(), 'R': set(), '&': set(), '|': set(),
-                          'G': set(), 'F': set(), 'X': set(), 'L': set()}
+        self.operators = {'U': Multiset(), 'R': Multiset(), '&': Multiset(), '|': Multiset(),
+                          'G': Multiset(), 'F': Multiset(), 'X': Multiset(), 'L': Multiset()}
         if itr:  # Constructor by passing an iterable
             super().__init__(itr)
             for formula in itr:
@@ -20,27 +22,43 @@ class TlSet(set):
             super().__init__()
 
     def __copy__(self):
-        new_tl_set = TlSet()
-        return new_tl_set.copy()
-
-    def __deepcopy__(self, memodict={}):
-        new_tl_set = TlSet()
-        for x in self:
-            new_tl_set.add(x)
+        new_tl_set = copy.deepcopy(self)
         return new_tl_set
 
-    def add(self, formula):
-        super().add(formula)
+    # def __deepcopy__(self, memodict={}):
+    #     new_tl_set = TlSet()
+    #     for x in self:
+    #         new_tl_set.add(x)
+    #     return new_tl_set
+
+    def __eq__(self, other):
+        return self.operators == other.operators
+
+    def __ne__(self, other):
+        return self.operators != other.operators
+
+    def clone(self):
+        new_tl_set = copy.deepcopy(self)
+        new_tl_set.operators = copy.deepcopy(self.operators)
+        return new_tl_set
+
+    def add(self, formula, multiplicity=1):
+        super().add(formula, multiplicity)
         self.add_to_operators(formula)
 
-    def add_to_operators(self, formula):
-        if isinstance(formula, Formula):
-            self.operators[formula.operator()].add(formula)
-        else:  # isinstance(formula, Atom)
-            self.operators['L'].add(formula)
+    def get(self, formula, default=None):
+        return super().get(formula, default)
 
-    def remove(self, formula):
-        super().remove(formula)
+    def add_to_operators(self, formula):
+        self.operators[formula.operator()].add(formula)
+        # if isinstance(formula, Formula):
+        # self.operators[formula.operator()].add(formula)
+        # else:  # isinstance(formula, Atom)
+        #     self.operators['L'].add(formula)
+
+    def remove(self, formula, multiplicity=None, default=None):
+        # Return the multiplicity of the removed formula
+        return super().remove(formula, multiplicity)
 
     def is_empty(self):
         return len(self) == 0
@@ -49,7 +67,12 @@ class TlSet(set):
         return False
 
     def is_elementary(self):
-        return False
+        return (len(self.operators['U']) == 0 and
+                len(self.operators['R']) == 0 and
+                len(self.operators['F']) == 0 and
+                len(self.operators['G']) == 0 and
+                len(self.operators['&']) == 0 and
+                len(self.operators['|']) == 0)
 
     def is_sat_elementary(self):
         return False
@@ -72,17 +95,23 @@ class TlSet(set):
     # U >> F >> & >> G >> R >> |
     def pop_formula(self):
         if self.operators['U']:
-            selected_formula = self.operators['U'].pop()
+            selected_formula = next(iter(self.operators['U']))
+            self.operators['U'].remove(selected_formula)
         elif self.operators['F']:
-            selected_formula = self.operators['F'].pop()
+            selected_formula = next(iter(self.operators['F']))
+            self.operators['F'].remove(selected_formula)
         elif self.operators['&']:
-            selected_formula = self.operators['&'].pop()
+            selected_formula = next(iter(self.operators['&']))
+            self.operators['&'].remove(selected_formula)
         elif self.operators['G']:
-            selected_formula = self.operators['G'].pop()
+            selected_formula = next(iter(self.operators['G']))
+            self.operators['G'].remove(selected_formula)
         elif self.operators['R']:
-            selected_formula = self.operators['R'].pop()
+            selected_formula = next(iter(self.operators['R']))
+            self.operators['R'].remove(selected_formula)
         elif self.operators['|']:
-            selected_formula = self.operators['|'].pop()
+            selected_formula = next(iter(self.operators['|']))
+            self.operators['|'].remove(selected_formula)
         else:  # Impossible reachable code in the application
             raise Exception("There are not valid formulas to pop", self)
         self.remove(selected_formula)

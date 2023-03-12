@@ -55,3 +55,29 @@ def test_pop_formula():
     # Not valid formulas to pop, catch the exception
     with pytest.raises(Exception) as e:
         tl_set.pop_formula()
+
+
+def test_multiset_multiplicity():
+    formula_list = [Formula(('F', Atom('b'))), Atom('a'), Formula(
+        ('U', Atom('a'), Formula(('|', frozenset([Atom('a'), Formula(('X', 'b'))]))))), Atom('a'), Atom('a')]
+    tl_set = TlSet(formula_list)
+    assert tl_set.get(Atom('a')) == 3
+    assert tl_set.remove(Atom('a')) == 3
+    assert tl_set.get(Formula(('F', Atom('b')))) == 1
+    assert tl_set.remove(Formula(('F', Atom('b')))) == 1
+
+
+def test_copy():
+    formula_list = [Formula(('F', Atom('b'))), Atom('a'), Formula(
+        ('U', Atom('a'), Formula(('|', frozenset([Atom('a'), Formula(('X', 'b'))])))))]
+
+    tl_set = TlSet(formula_list)
+    tl_set_copy = tl_set.clone()
+    assert tl_set == tl_set_copy
+    tl_set_copy.operators['L'].add(Atom('b'))
+    assert tl_set != tl_set_copy
+    tl_set_copy.operators['L'].remove(Atom('b'))
+    assert tl_set == tl_set_copy
+    tl_set.add(Atom('c'))
+    assert tl_set != tl_set_copy
+    assert tl_set.operators != tl_set_copy.operators

@@ -9,9 +9,10 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.11"
 z3-solver = "^4.0.0"
 mypy = "^0.991"
+multiset = "^3.0.1"
 
 
 [tool.poetry.dev-dependencies]
