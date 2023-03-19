@@ -1,4 +1,4 @@
-from momo.tl.formula import Formula
+from momo.tl.formula import Formula, Atom
 from momo.tl.tl_set import TlSet
 from momo.tableau.branch import Branch
 from momo.tableau.closure import Closure, SatTable
@@ -9,98 +9,373 @@ from collections import deque
 
 
 class Tableau:
-    def __init__(self, initial_formula: Formula):
-        self.closure = Closure(initial_formula)
-        initial_set = TlSet([initial_formula])
-        self.branch = Branch(initial_set)
-        self.node = Node(initial_set,
-                         self.closure, self.branch, deque())
+    def __init__(self, initial_formula):
+        if isinstance(initial_formula, Formula) or isinstance(initial_formula, Atom):
+            self.closure = Closure(initial_formula)
+            initial_set = TlSet([initial_formula])
+            self.branch = Branch(initial_set)
+            self.node = Node(initial_set,
+                             self.closure, self.branch, deque())
+        elif isinstance(initial_formula, list):
+            self.closure = Closure()
+            for formula in initial_formula:
+                self.closure.build_closure(formula)
+            initial_set = TlSet(initial_formula)
+            self.branch = Branch(initial_set)
+            self.node = Node(initial_set,
+                             self.closure, self.branch, deque())
 
     def basic_step(self):
-        can_expand = None
         formula = self.node.pop_formula()
+        sat = False
         if formula.is_and():
-            can_expand = self.and_expansion(formula)
-        if formula.is_always():
-            can_expand = self.always_expansion(formula)
-        # if formula.is_or():
-        #     sat, proof = or_expansion(formula, branch)
-        # if formula.is_release():
-        #     sat, proof = release_expansion(formula, branch)
-        # if formula.is_eventually():
-        #     sat, proof = eventually_expansion(formula, branch)
-        # if formula.is_until():
-        #     sat, proof = until_expansion(formula, branch)
-        assert can_expand != None
-        if can_expand:
-            sat = self.tableau()
-            return sat
+            sat = self.and_expansion(formula)
+        elif formula.is_always():
+            sat = self.always_expansion(formula)
+        elif formula.is_or():
+            sat = self.or_expansion(formula)
+        elif formula.is_release():
+            sat = self.release_expansion(formula)
+        elif formula.is_eventually():
+            sat = self.eventually_expansion(formula)
+        elif formula.is_until():
+            sat = self.until_expansion(formula)
         else:
-            return False
+            raise Exception("Formula is not valid")
+        return sat
+
+    def expand(self):
+        sat = self.tableau()
+        if sat:
+            return sat
+
+    def rollback(self, added_formulas):
+        for added_formula in added_formulas:
+            self.node.remove(added_formula)
+
+    ##########################################
+    # And Expansion
+    ##########################################
 
     def _and_rollback(self, updated_elements):
         for updated_element in updated_elements:
             self.node.remove(updated_element)
 
     def and_expansion(self, formula):
-        # self.traces.path.add_rule('And expansion')
-        # self.traces.path.add_selected_formula(formula)
-        # TODO: revisar el otro todo de abajo, aqui no se ha deshecho el cambio en caso de sat=false, hay que tratarlo de alguna forma
+        """Expand the formula removing the formula and addind all and subformulas
+
+        Args:
+            formula (Formula | Atom): And formula
+
+        Returns:
+            sat: True if a model was found, else False.
+        """
+        # Expand the formula removing the formula and addind all and (&) subformulas
+        can_expand, added_formulas = self._and_expansion(formula)
+        if can_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(added_formulas)
+        return False
+
+    def _and_expansion(self, formula):
+        """Extract all the subformulas from the and formula and add it to the node
+
+        Args:
+            formula (Formula | Atom): And formula
+
+        Returns:
+            can_expand (Boolean): True if the formula expands correctly, i.e., there are not contradictions
+                or inconsistencies.
+            added_formulas (List): List of added formulas to remove in case of closed node.
+        """
+        added_formula = []
         if '0' in formula:
-            return False
-        updated_elements = []
+            return False, added_formula
         for element in formula[1]:
             if not self.node.contradicts(element):
                 self.node.add(element)
-                updated_elements.append(element)
+                added_formula.append(element)
             else:
-                self._and_rollback(updated_elements)
-                return False
-        return True
+                return False, added_formula
+        return True, added_formula
 
     ##########################################
     # Always Expansion
     ##########################################
-    # TODO: Hay que pensar que hacer con el rollback si sat = false, o se hace en la propia función, o hay que devolver algo para deshacer el cambio
+
     def always_expansion(self, formula):
+        """
+        Expands the given formula using the always rule.
+        If the expansion is successful, returns the satisfiability of the tableau.
+        Otherwise, rolls back the expansion and returns False.
+
+        Args:
+            formula: The formula to expand.
+
+        Returns:
+            The satisfiability of the tableau if the expansion is successful, False otherwise.
+        """
+        can_expand, added_formulas = self._always_expansion(formula)
+        if can_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(added_formulas)
+        return False
+
+    def _always_expansion(self, formula):
+        """
+        Expands the given formula and returns a tuple with a boolean indicating whether the formula 
+        can be expanded and a list of added formulas.
+
+        Args:
+            formula: A formula to expand.
+
+        Returns:
+            A tuple of a boolean indicating whether the formula can be expanded and a list of added formulas.
+        """
         phi = formula[1]
         next_phi = formula.add_operator('X')
         if phi == '0':
-            return False
+            return False, []
         if self.node.contradicts(phi):
-            return False
+            return False, []
         else:
             self.node.add(phi)
             if self.node.contradicts(next_phi):
-                self.node.remove(phi)
-                return False
+                return False, [phi]
             else:
                 self.node.add(next_phi)
+                return True, [phi, next_phi]
+
+    ##########################################
+    # Or Expansion
+    ##########################################
+
+    def _or_expansion(self, element):
+        if element == "0":
+            return False
+        elif self.node.contradicts(element):
+            return False
+        else:
+            self.node.add(element)
+            return element
+
+    def or_expansion(self, formula):
+        if '1' in formula[1]:
+            return True
+
+        for element in formula[1]:
+            added_formula = self._or_expansion(element)
+            if added_formula:
                 sat = self.tableau()
                 if sat:
-                    return True
+                    return sat
                 else:
-                    self.node.remove(next_phi)
-                    self.node.remove(phi)
+                    self.node.remove(added_formula)
         return False
 
-    def _or_expansion(self, formula):
-        # self.traces.path.add_rule('And expansion')
-        # self.traces.path.add_selected_formula(formula)
-        if '0' in formula:
-            return False
-        updated_elements = []
-        for element in formula[1]:
-            if not self.node.contradicts(element):
-                self.node.add(element)
-                updated_elements.append(element)
+    ##########################################
+    # Release Expansion
+    ##########################################
+    def release_expansion(self, formula):
+        can_left_expand, left_expand_added_formulas = self._release_expansion_left(
+            formula)
+        if can_left_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(left_expand_added_formulas)
+
+        can_right_expand, right_expand_added_formulas = self._release_expansion_right(
+            formula)
+        if can_right_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(right_expand_added_formulas)
+
+    def _release_expansion_left(self, formula):
+        phi = formula[1]
+        psi = formula[2]
+        added_formulas = []
+        if self.node.contradicts(phi):
+            return False, added_formulas
+        else:
+            self.node.add(phi)
+            added_formulas.append(phi)
+            if self.node.contradicts(psi):
+                return False, added_formulas
             else:
-                self._or_rollback(updated_elements)
-                return False
-        sat = self.tableau.solve()
+                self.node.add(psi)
+                added_formulas.append(psi)
+                return True, added_formulas
+
+    def _release_expansion_right(self, formula):
+        phi = formula[1]
+        psi = formula[2]
+        next_of_formula = formula.add_operator('X')
+        added_formulas = []
+        if self.node.contradicts(psi):
+            return False, added_formulas
+        else:
+            self.node.add(psi)
+            added_formulas.append(psi)
+            if self.node.contradicts(next_of_formula):
+                return False, added_formulas
+            else:
+                self.node.add(next_of_formula)
+                added_formulas.append(next_of_formula)
+                return True, added_formulas
+
+    ##########################################
+    # Eventually Expansion
+    ##########################################
+    def _eventually_expansion_left(self, formula):
+        phi = formula[1]
+        added_formulas = []
+        if phi == '0':
+            return False, added_formulas
+        if self.node.contradicts(phi):
+            return False, added_formulas
+        else:
+            self.node.add(phi)
+            # Aqui tengo que hacer algo con las eventualidades
+            added_formulas.append(phi)
+            return True, added_formulas
+
+    def _eventually_expansion_right(self, formula):
+        next_of_formula = formula.add_operator('X')
+        added_formulas = []
+        if self.node.contradicts(next_of_formula):
+            return False, added_formulas
+        else:
+            self.node.add(next_of_formula)
+            added_formulas.append(next_of_formula)
+            return True, added_formulas
+
+    def eventually_expansion(self, formula):
+
+        can_left_expand, left_expand_added_formulas = self._eventually_expansion_left(
+            formula)
+        if can_left_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(left_expand_added_formulas)
+
+        can_right_expand, right_expand_added_formulas = self._eventually_expansion_right(
+            formula)
+        if can_right_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(right_expand_added_formulas)
+
+    ##########################################
+    # Until Expansion
+    ##########################################
+
+    def _until_expansion_left(self, formula):
+        psi = formula[2]
+        added_formulas = []
+        if psi == '0':
+            return False, added_formulas
+        if self.node.contradicts(psi):
+            return False, added_formulas
+        else:
+            self.node.add(psi)
+            # Aqui tengo que hacer algo con las eventualidades
+            added_formulas.append(psi)
+            return True, added_formulas
+
+    def _until_expansion_right(self, formula):
+        phi = formula[1]
+        next_of_formula = formula.add_operator('X')
+        added_formulas = []
+        if self.node.contradicts(phi):
+            return False, added_formulas
+        else:
+            self.node.add(phi)
+            added_formulas.append(phi)
+            if self.node.contradicts(next_of_formula):
+                return False, added_formulas
+            else:
+                self.node.add(next_of_formula)
+                added_formulas.append(next_of_formula)
+                return True, added_formulas
+
+    def until_expansion(self, formula):
+        can_left_expand, left_expand_added_formulas = self._until_expansion_left(
+            formula)
+        if can_left_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(left_expand_added_formulas)
+
+        can_right_expand, right_expand_added_formulas = self._until_expansion_right(
+            formula)
+        if can_right_expand:
+            sat = self.tableau()
+            if sat:
+                return sat
+        self.rollback(right_expand_added_formulas)
+
+    ##########################################
+    # Next Stage
+    ##########################################
+
+    def next_stage(self):
+        can_expand, new_node = self._next_stage()
+        if can_expand:
+            old_node = self.node
+            self.node = new_node
+            sat = self.tableau()
+            if sat:
+                return sat
+            else:
+                self.node = old_node
         return False
+
+    def _next_stage(self):
+        # Creation of new node
+        new_node: Node = self.node.new_node()
+        added_formulas = []
+        for next_element in self.node.tl_set.operators['X']:
+            element = next_element[1]
+            if element.is_and():
+                # If the element is an and, we try to add directly the and elements
+                can_expand, added_formulas = new_node._node_and_expansion(
+                    element)
+                if not can_expand:
+                    return False, self.node
+            else:
+                if new_node.contradicts(element):
+                    return False, self.node
+                else:
+                    new_node.add(element)
+                    added_formulas.append(element)
+        return True, new_node
 
     def tableau(self):
+        phi = self.node.tl_set
+        sat = False
+        if phi.is_empty():
+            is_closed, model = False, build_model(self.branch)
+        elif phi.is_inconsistent():
+            is_closed, proof = True, build_proof(self.branch)
+        elif phi.is_elementary():
+            sat = self.next_stage()
+        else:
+            sat = self.basic_step()
+
+        if sat:
+            print("Model Found")
+
+    def tableau2(self):
         phi = self.node.tl_set
         if phi.is_empty():
             is_closed, model = False, build_model(self.branch)
@@ -119,22 +394,58 @@ class Tableau:
                     branch.pop()
             else:
                 is_closed, proof_list = True, []
-                alpha = ltl2sat(phi)
-                is_sat, sat_model = sat_solver(alpha)
-                while is_sat and is_closed:
-                    sat_phi = sat2ltl(sat_model)
-                    sat_branch = add_to_last_stage(branch, sat_phi)
-                    psi = sat_phi.next_stage()
-                    sat_branch.update(psi)
-                    is_closed, proof, model = tableau(psi, sat_branch)
-                    if is_closed:
-                        proof_list.append(proof)
-                        alpha.add(sat_model.neg())
-                        is_sat, sat_model = sat_solver(alpha)
-                        sat_branch.rollback(psi)
+                # alpha = ltl2sat(phi)
+                # is_sat, sat_model = sat_solver(alpha)
+                # while is_sat and is_closed:
+                #     sat_phi = sat2ltl(sat_model)
+                #     sat_branch = add_to_last_stage(branch, sat_phi)
+                #     psi = sat_phi.next_stage()
+                #     sat_branch.update(psi)
+                #     is_closed, proof, model = tableau(psi, sat_branch)
+                #     if is_closed:
+                #         proof_list.append(proof)
+                #         alpha.add(sat_model.neg())
+                #         is_sat, sat_model = sat_solver(alpha)
+                #         sat_branch.rollback(psi)
                 # proof = build_proof(phi, 'sat', proof_list)
         else:
             self.basic_step()
+
+    # def tableau(self):
+    #     phi = self.node.tl_set
+    #     if phi.is_empty():
+    #         is_closed, model = False, build_model(self.branch)
+    #     elif phi.is_inconsistent():
+    #         is_closed, proof = True, build_proof(self.branch)
+    #     elif phi.is_sat_elementary():
+    #         if self.branch.has_fulfill_all_eventualities() and phi in self.branch:
+    #             is_closed, model = False, build_model(self.branch)
+    #         if phi.is_elementary():
+    #             return True
+    #             psi = phi.next_stage()
+    #             branch.append(psi)
+    #             is_closed, proof, model = tableau(psi, branch)
+    #             if is_closed:
+    #                 # proof = build_proof(phi, 'X', proof)
+    #                 branch.pop()
+    #         else:
+    #             is_closed, proof_list = True, []
+    #             alpha = ltl2sat(phi)
+    #             is_sat, sat_model = sat_solver(alpha)
+    #             while is_sat and is_closed:
+    #                 sat_phi = sat2ltl(sat_model)
+    #                 sat_branch = add_to_last_stage(branch, sat_phi)
+    #                 psi = sat_phi.next_stage()
+    #                 sat_branch.update(psi)
+    #                 is_closed, proof, model = tableau(psi, sat_branch)
+    #                 if is_closed:
+    #                     proof_list.append(proof)
+    #                     alpha.add(sat_model.neg())
+    #                     is_sat, sat_model = sat_solver(alpha)
+    #                     sat_branch.rollback(psi)
+    #             # proof = build_proof(phi, 'sat', proof_list)
+    #     else:
+    #         self.basic_step()
 
 
 def build_model(branch):
@@ -143,35 +454,6 @@ def build_model(branch):
 
 def build_proof(branch):
     pass
-
-
-def tableau_expansion(formula: Formula, branch: Branch):
-    if formula.is_and():
-        sat, proof = _and_expansion(formula, branch)
-        if sat:
-            return True, 1
-    elif formula.is_always():
-        sat, proof = self.rules.always_expansion(formula, node)
-        if sat:
-            return True, 1
-    elif formula.is_or():
-        sat, proof = self.rules.or_expansion(formula, node)
-        if sat:
-            return True, 1
-    elif formula.is_release():
-        sat, proof = self.rules.release_expansion(formula, node)
-        if sat:
-            return True, 1
-    elif formula.is_eventually():
-        sat, proof = self.rules.eventually_expansion(formula, node)
-        if sat:
-            return True, 1
-    elif formula.is_until():
-        sat, proof = self.rules.until_expansion(formula, node)
-        if sat:
-            return True, 1
-    else:
-        return True, 1
 
 
 def ltl2sat():

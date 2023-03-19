@@ -56,8 +56,15 @@ class TlSet(Multiset):
         # else:  # isinstance(formula, Atom)
         #     self.operators['L'].add(formula)
 
+    def remove_from_operators(self, formula, multiplicity):
+        self.operators[formula.operator()].remove(formula, multiplicity)
+
+    def remove_from_set(self, formula, multiplicity=None):
+        return super().remove(formula, multiplicity)
+
     def remove(self, formula, multiplicity=None, default=None):
         # Return the multiplicity of the removed formula
+        self.remove_from_operators(formula, multiplicity)
         return super().remove(formula, multiplicity)
 
     def is_empty(self):
@@ -114,7 +121,7 @@ class TlSet(Multiset):
             self.operators['|'].remove(selected_formula)
         else:  # Impossible reachable code in the application
             raise Exception("There are not valid formulas to pop", self)
-        self.remove(selected_formula)
+        self.remove_from_set(selected_formula)
         return selected_formula
 
 
