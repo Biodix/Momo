@@ -173,6 +173,15 @@ def test_tableau_next_stage_expansion_fail():
     assert new_node.tl_set == tableau_copy.node.tl_set
 
 
+def test_basic_closed_tableau():
+    initial_formula = [
+        Formula(('X', Atom('-a'))), Formula(('G', Atom('a')))]
+
+    tableau = Tableau(initial_formula)
+    sat = tableau.tableau()
+    assert sat == False
+
+
 def test_basic_tableau():
     initial_formula = [Formula(('G', Formula(('&', frozenset([Atom('a'), Formula(('G', Atom('a')))]))))),
                        Formula(('X', Atom('-a'))), Atom('b')]

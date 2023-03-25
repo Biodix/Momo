@@ -374,6 +374,7 @@ class Tableau:
 
         if sat:
             print("Model Found")
+        return sat
 
     def tableau2(self):
         phi = self.node.tl_set
