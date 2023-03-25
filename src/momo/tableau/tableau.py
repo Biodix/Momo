@@ -196,6 +196,7 @@ class Tableau:
             if sat:
                 return sat
         self.rollback(right_expand_added_formulas)
+        return False
 
     def _release_expansion_left(self, formula):
         phi = formula[1]
@@ -236,6 +237,7 @@ class Tableau:
     def _eventually_expansion_left(self, formula):
         phi = formula[1]
         added_formulas = []
+
         if phi == '0':
             return False, added_formulas
         if self.node.contradicts(phi):
@@ -257,13 +259,17 @@ class Tableau:
             return True, added_formulas
 
     def eventually_expansion(self, formula):
-
+        ev_formula = formula[1]
         can_left_expand, left_expand_added_formulas = self._eventually_expansion_left(
             formula)
         if can_left_expand:
+            fulfilled = self.branch.fulfill_eventuality(ev_formula)
             sat = self.tableau()
             if sat:
                 return sat
+            else:  # Remove the eventuallity for the set of fullfilled eventualities and add it to the remaining
+                self.branch.neglect_eventuality(ev_formula, fulfilled)
+
         self.rollback(left_expand_added_formulas)
 
         can_right_expand, right_expand_added_formulas = self._eventually_expansion_right(
@@ -273,6 +279,7 @@ class Tableau:
             if sat:
                 return sat
         self.rollback(right_expand_added_formulas)
+        return False
 
     ##########################################
     # Until Expansion
@@ -308,12 +315,16 @@ class Tableau:
                 return True, added_formulas
 
     def until_expansion(self, formula):
+        ev_formula = formula[2]
         can_left_expand, left_expand_added_formulas = self._until_expansion_left(
             formula)
         if can_left_expand:
+            fulfilled = self.branch.fulfill_eventuality(ev_formula)
             sat = self.tableau()
             if sat:
                 return sat
+            else:  # Remove the eventuallity for the set of fullfilled eventualities and add it to the remaining
+                self.branch.neglect_eventuality(ev_formula, fulfilled)
         self.rollback(left_expand_added_formulas)
 
         can_right_expand, right_expand_added_formulas = self._until_expansion_right(
@@ -323,6 +334,7 @@ class Tableau:
             if sat:
                 return sat
         self.rollback(right_expand_added_formulas)
+        return False
 
     ##########################################
     # Next Stage

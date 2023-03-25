@@ -13,9 +13,17 @@ class Node:
         self.operations_history = operations_history
 
     def add(self, formula):
+        if formula.is_eventually():
+            self.branch.add_remaining_eventuality(formula[1])
+        if formula.is_until():
+            self.branch.add_remaining_eventuality(formula[2])
         self.tl_set.add(formula)
 
     def remove(self, formula):
+        if formula.is_eventually():
+            self.branch.remove_remaining_eventuality(formula[1])
+        if formula.is_until():
+            self.branch.remove_remaining_eventuality(formula[2])
         self.tl_set.remove(formula)
 
     def contradicts(self, formula: Formula):
@@ -54,7 +62,13 @@ class Node:
         return self.tl_set.is_elementary()
 
     def new_node(self):
-        return Node(TlSet(), self.closure, self.branch, self.operations_history)
+        branch_remaining_eventualities = self.branch.remaining_eventualities.copy()
+        branch_fulfilled_eventualities = self.branch.fulfilled_eventualities.copy()
+        branch_literals = self.branch.literals.copy()
+        new_branch = Branch(remaining_eventualities=branch_remaining_eventualities,
+                            fulfilled_eventualities=branch_fulfilled_eventualities,
+                            literals=branch_literals)
+        return Node(TlSet(), self.closure, new_branch, self.operations_history)
 
     def pop_formula(self):
         return self.tl_set.pop_formula()
