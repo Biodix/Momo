@@ -81,3 +81,31 @@ def test_copy():
     tl_set.add(Atom('c'))
     assert tl_set != tl_set_copy
     assert tl_set.operators != tl_set_copy.operators
+
+
+def test_sat_elementary():
+    formula1 = [Formula(('F', Atom('b'))), Atom('a')]
+    tl_set1 = TlSet(formula1)
+    assert tl_set1.is_sat_elementary() == False
+
+    formula2 = [Formula(('|', frozenset([Atom('a'), Formula(('X', 'b'))])))]
+    tl_set2 = TlSet(formula2)
+    assert tl_set2.is_sat_elementary() == True
+
+    formula3 = [Atom('a'), Formula(('X', 'b')), Formula(('|', frozenset(
+        [Atom('a'), Atom('b'), Formula(('X', 'b')), Formula(('X', 'c'))])))]
+    tl_set3 = TlSet(formula3)
+    assert tl_set3.is_sat_elementary() == True
+
+    formula4 = [Atom('a'), Formula(('|', frozenset(
+        [Atom('a'), Atom('b'), Formula(('G', 'b')), Formula(('X', 'c'))])))]
+    tl_set4 = TlSet(formula4)
+    assert tl_set4.is_sat_elementary() == False
+
+    formula5 = [Formula(('X', 'b'))]
+    tl_set5 = TlSet(formula5)
+    assert tl_set5.is_sat_elementary() == True
+
+    formula6 = [Formula(('X', 'b')), Formula(('X', 'b')), Formula(('X', 'b'))]
+    tl_set6 = TlSet(formula6)
+    assert tl_set6.is_sat_elementary() == True

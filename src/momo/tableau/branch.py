@@ -1,9 +1,11 @@
 from momo.tl.tl_set import TlSet
+from multiset import Multiset
 
 
 class Branch(list):
     def __init__(self, initial_set=None, remaining_eventualities=(), fulfilled_eventualities=(), literals=()):
         super().__init__()
+        self.append(Multiset())
         self.remaining_eventualities = TlSet(remaining_eventualities)
         self.fulfilled_eventualities = TlSet(fulfilled_eventualities)
         self.eventualities = TlSet()  # Puede que no se haga asi
@@ -18,12 +20,13 @@ class Branch(list):
                     self.eventualities.add(formula[2])
                 elif formula.is_atom():
                     self.literals.add(formula)
+                self[-1].add(formula)
 
-    def append(self, tl_Set):
-        self.append(tl_Set)
+    def add_to_stage(self, formula, multiplicity=1):
+        self[-1].add(formula, multiplicity)
 
-    def pop(self):
-        return self.pop()
+    def remove_from_stage(self, formula, multiplicity=1):
+        self[-1].remove(formula, multiplicity)
 
     def add_remaining_eventuality(self, ev_formula):
         if ev_formula in self.fulfilled_eventualities:
@@ -48,3 +51,10 @@ class Branch(list):
 
     def has_fulfill_all_eventualities(self):
         return len(self.remaining_eventualities) == 0
+
+    def check_cycles(self, set_of_formulae):
+        if self.has_fulfill_all_eventualities():
+            for stage in self:
+                if stage.issuperset(set_of_formulae):
+                    return True
+        return False

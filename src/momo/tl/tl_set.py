@@ -82,6 +82,13 @@ class TlSet(Multiset):
                 len(self.operators['|']) == 0)
 
     def is_sat_elementary(self):
+        if (len(self.operators['X']) + len(self.operators['L']) + len(
+                self.operators['|']) == len(self)):
+            for or_formula in self.operators['|']:
+                for or_element in or_formula[1]:
+                    if not(or_element.is_next() or or_element.is_atom()):
+                        return False
+            return True
         return False
 
     def next_stage(self):

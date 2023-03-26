@@ -18,6 +18,7 @@ class Node:
         if formula.is_until():
             self.branch.add_remaining_eventuality(formula[2])
         self.tl_set.add(formula)
+        self.branch.add_to_stage(formula)
 
     def remove(self, formula):
         if formula.is_eventually():
@@ -25,6 +26,7 @@ class Node:
         if formula.is_until():
             self.branch.remove_remaining_eventuality(formula[2])
         self.tl_set.remove(formula)
+        self.branch.remove_from_stage(formula)
 
     def contradicts(self, formula: Formula):
         # if formula not in self.closure:
@@ -60,6 +62,9 @@ class Node:
 
     def is_elementary(self):
         return self.tl_set.is_elementary()
+
+    def is_sat_elementary(self):
+        return self.tl_set.is_sat_elementary()
 
     def new_node(self):
         branch_remaining_eventualities = self.branch.remaining_eventualities.copy()

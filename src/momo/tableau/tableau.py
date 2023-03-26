@@ -3,6 +3,7 @@ from momo.tl.tl_set import TlSet
 from momo.tableau.branch import Branch
 from momo.tableau.closure import Closure, SatTable
 from momo.tableau.node import Node
+from multiset import Multiset
 
 from collections import deque
 # for sat use enum_models()
@@ -341,15 +342,21 @@ class Tableau:
     ##########################################
 
     def next_stage(self):
+        self.branch.append(Multiset())
         can_expand, new_node = self._next_stage()
         if can_expand:
-            old_node = self.node
-            self.node = new_node
-            sat = self.tableau()
-            if sat:
-                return sat
+            has_cycle = self.branch.check_cycles(new_node.tl_set)
+            if has_cycle:
+                return True
             else:
-                self.node = old_node
+                old_node = self.node
+                self.node = new_node
+                sat = self.tableau()
+                if sat:
+                    return sat
+                else:
+                    self.node = old_node
+        self.branch.pop()
         return False
 
     def _next_stage(self):
@@ -379,8 +386,14 @@ class Tableau:
             is_closed, model = False, build_model(self.branch)
         elif phi.is_inconsistent():
             is_closed, proof = True, build_proof(self.branch)
-        elif phi.is_elementary():
-            sat = self.next_stage()
+        elif phi.is_sat_elementary():
+            # has_cycle = self.branch.check_cycles(self.node.tl_set)
+            # if has_cycle:
+            #     return True
+            if phi.is_elementary():
+                sat = self.next_stage()
+            else:
+                pass  # SAT SOLVER
         else:
             sat = self.basic_step()
 

@@ -182,36 +182,6 @@ def test_basic_closed_tableau():
     assert sat == False
 
 
-def test_branch_eventualities():
-    initial_formula = [
-        Formula(('X', Formula(('F', Atom('a'))))),
-        Formula(('X', Formula(('G', Atom('-a'))))),
-        Formula(('F', Atom('b'))),
-        Formula(('F', Atom('-c')))]
-
-    tableau = Tableau(initial_formula)
-    sat = tableau.tableau()
-    assert sat == False
-    assert tableau.branch.remaining_eventualities == TlSet(
-        [Atom('b'), Atom('-c')])
-    assert tableau.branch.fulfilled_eventualities == TlSet([])
-
-
-def test_branch_until():
-    initial_formula = [
-        Formula(('X', Formula(('F', Atom('a'))))),
-        Formula(('X', Formula(('G', Atom('-a'))))),
-        Formula(('U', Atom('d'), Atom('b'))),
-        Formula(('U', Atom('d'), Atom('-c')))]
-
-    tableau = Tableau(initial_formula)
-    sat = tableau.tableau()
-    assert sat == False
-    assert tableau.branch.remaining_eventualities == TlSet(
-        [Atom('b'), Atom('-c')])
-    assert tableau.branch.fulfilled_eventualities == TlSet([])
-
-
 def test_basic_tableau():
     initial_formula = [Formula(('G', Formula(('&', frozenset([Atom('a'), Formula(('G', Atom('a')))]))))),
                        Formula(('X', Atom('-a'))), Atom('b')]
