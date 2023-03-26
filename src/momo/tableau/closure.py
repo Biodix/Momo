@@ -1,15 +1,16 @@
 class SatTable:
     def __init__(self):
-        self.formula_to_sat = {}
-        self.sat_to_formula = {}
+        self.formula_to_number = {}
+        self.number_to_formula = {}
 
     def add_entry(self, formula, nnf_formula):
-        i = str(len(self.formula_to_sat) // 2 + 1)
-        neg_i = "-" + i
-        self.formula_to_sat[formula] = i
-        self.formula_to_sat[nnf_formula] = neg_i
-        self.sat_to_formula[i] = formula
-        self.sat_to_formula[neg_i] = nnf_formula
+        if formula not in self.formula_to_number:
+            i = str(len(self.formula_to_number) // 2 + 1)
+            neg_i = "-" + i
+            self.formula_to_number[formula] = i
+            self.formula_to_number[nnf_formula] = neg_i
+            self.number_to_formula[i] = formula
+            self.number_to_formula[neg_i] = nnf_formula
 
 
 class Closure(dict):

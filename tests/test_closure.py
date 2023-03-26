@@ -9,7 +9,7 @@ def test_sat_table1():
     sat_table = SatTable()
     sat_table.add_entry(formula1, formula1_nnf)
 
-    assert sat_table.formula_to_sat == {
+    assert sat_table.formula_to_number == {
         Formula(("F", Atom("a"))): "1",
         Formula(("G", Atom("-a"))): "-1",
     }
@@ -24,7 +24,7 @@ def test_sat_table2():
     sat_table.add_entry(formula1, formula1_nnf)
     sat_table.add_entry(formula2, formula2_nnf)
 
-    assert sat_table.formula_to_sat == {
+    assert sat_table.formula_to_number == {
         Formula(("F", Atom("a"))): "1",
         Formula(("G", Atom("-a"))): "-1",
         Formula(("F", Formula(("G", Atom("a"))))): "2",

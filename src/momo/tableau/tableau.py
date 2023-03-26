@@ -4,6 +4,7 @@ from momo.tableau.branch import Branch
 from momo.tableau.closure import Closure, SatTable
 from momo.tableau.node import Node
 from multiset import Multiset
+from momo.tableau.sat_solver import SatSolver
 
 from collections import deque
 # for sat use enum_models()
@@ -17,6 +18,7 @@ class Tableau:
             self.branch = Branch(initial_set)
             self.node = Node(initial_set,
                              self.closure, self.branch, deque())
+            self.sat_solver = SatSolver(self)
         elif isinstance(initial_formula, list):
             self.closure = Closure()
             for formula in initial_formula:
@@ -25,6 +27,7 @@ class Tableau:
             self.branch = Branch(initial_set)
             self.node = Node(initial_set,
                              self.closure, self.branch, deque())
+            self.sat_solver = SatSolver(self)
 
     def basic_step(self):
         formula = self.node.pop_formula()
