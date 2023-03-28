@@ -188,3 +188,11 @@ def test_basic_tableau():
 
     tableau = Tableau(initial_formula)
     tableau.tableau()
+
+
+def test_sat_tableau():
+    initial_formula = [Formula(('G', Formula(('|', frozenset([Atom('a'), Formula(('X', Atom('a'))), Formula(('X', Atom('b')))]))))),
+                       Formula(('X', Atom('-a'))), Atom('b')]
+
+    tableau = Tableau(initial_formula)
+    tableau.tableau()

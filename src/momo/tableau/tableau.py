@@ -386,7 +386,7 @@ class Tableau:
     def sat_expansion(self, phi):
         clauses = self.sat_solver.tl_set_to_sat(phi)
         for model in self.sat_solver.solve(clauses):
-            tl_set = self.sat_solver.sat_to_tl_set(model)
+            tl_set = self.sat_solver.model_to_tl_set(model)
             for formula in tl_set:
                 self.branch.add_to_stage(formula)
                 # Augment with new stage

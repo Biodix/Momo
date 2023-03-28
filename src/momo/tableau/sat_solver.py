@@ -83,6 +83,13 @@ class SatSolver:
             tl_set.add(formula)
         return tl_set
 
+    def model_to_tl_set(self, clause):
+        tl_set = TlSet()
+        for number in clause:
+            formula = self.int_to_formula_map[number]
+            tl_set.add(formula)
+        return tl_set
+
     def solve(self, clauses):
         # TODO: Esto esta fallando, me esta devolviendo muchos modelos redundantes por la tonteria de que rellena
         # la solución con integer que no le he pasado. Revisarlo y hacer un reductor de integer a integer
