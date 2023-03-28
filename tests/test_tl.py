@@ -50,8 +50,8 @@ def test_pop_formula():
     formula_list = [Formula(('F', Atom('b'))), Atom('a'), Formula(
         ('U', Atom('a'), Formula(('|', frozenset([Atom('a'), Formula(('X', 'b'))])))))]
     tl_set = TlSet(formula_list)
-    assert tl_set.pop_formula() == formula_list[2]
-    assert tl_set.pop_formula() == formula_list[0]
+    assert tl_set.pop_formula()[0] == formula_list[2]
+    assert tl_set.pop_formula()[0] == formula_list[0]
     # Not valid formulas to pop, catch the exception
     with pytest.raises(Exception) as e:
         tl_set.pop_formula()

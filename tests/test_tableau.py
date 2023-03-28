@@ -33,7 +33,7 @@ def test_tableau_and_expansion():
     formula = Formula(("&", frozenset(
         [Formula(("G", Atom("a"))), Formula(("G", Atom("a"))), Atom("b")])))
     tableau = Tableau(formula)
-    and_formula = tableau.node.pop_formula()
+    and_formula, multiplicity = tableau.node.pop_formula()
     tableau._and_expansion(and_formula)
     assert tableau.node.tl_set == TlSet(
         [Formula(("G", Atom("a"))), Atom("b")])
@@ -42,7 +42,7 @@ def test_tableau_and_expansion():
 def test_tableau_always_expansion():
     formula = Formula(("G", Atom("a")))
     tableau = Tableau(formula)
-    always_formula = tableau.node.pop_formula()
+    always_formula, multiplicity = tableau.node.pop_formula()
     tableau._always_expansion(always_formula)
     assert tableau.node.tl_set == TlSet(
         [Formula(("X", Formula(("G", Atom("a"))))), Atom("a")])
@@ -52,7 +52,7 @@ def test_tableau_or_expansion():
     formula = Formula(
         ("|", frozenset([Formula(("F", Atom("a"))), Formula(("G", Atom("a")))])))
     tableau = Tableau(formula)
-    or_formula = tableau.node.pop_formula()
+    or_formula, multiplicity = tableau.node.pop_formula()
     assert or_formula.is_or()
     elements = [Formula(("F", Atom("a"))), Formula(("G", Atom("a")))]
     tableau._or_expansion(elements[0])
@@ -69,7 +69,7 @@ def test_tableau_release_expansion():
     formula = Formula(("R", Formula(("G", Atom("a"))),
                       Formula(("F", Atom("a")))))
     tableau = Tableau(formula)
-    release_formula = tableau.node.pop_formula()
+    release_formula, multiplicity = tableau.node.pop_formula()
     assert release_formula.is_release()
     tableau._release_expansion_left(release_formula)
     assert tableau.node.tl_set == TlSet(
@@ -85,7 +85,7 @@ def test_tableau_release_expansion():
 def test_tableau_eventually_expansion():
     formula = Formula(("F", Atom("a")))
     tableau = Tableau(formula)
-    eventually_formula = tableau.node.pop_formula()
+    eventually_formula, multiplicity = tableau.node.pop_formula()
     assert eventually_formula.is_eventually()
     tableau._eventually_expansion_left(eventually_formula)
     assert tableau.node.tl_set == TlSet([Atom("a")])
@@ -100,7 +100,7 @@ def test_tableau_until_expansion():
     formula = Formula(("U", Formula(("G", Atom("a"))),
                       Formula(("F", Atom("a")))))
     tableau = Tableau(formula)
-    until_formula = tableau.node.pop_formula()
+    until_formula, multiplicity = tableau.node.pop_formula()
     assert until_formula.is_until()
     tableau._until_expansion_left(until_formula)
     assert tableau.node.tl_set == TlSet([Formula(("F", Atom("a")))])
@@ -117,7 +117,7 @@ def test_tableau_until_expansion_fail():
                        Formula(("G", Atom("-a"))), Formula(("F", Atom("-a")))]
     tableau = Tableau(initial_formula)
     tableau_copy = Tableau(initial_formula)
-    until_formula = tableau.node.pop_formula()
+    until_formula, multiplicity = tableau.node.pop_formula()
     assert until_formula.is_until()
     can_expand_left, _ = tableau._until_expansion_left(
         until_formula)

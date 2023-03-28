@@ -62,7 +62,7 @@ class TlSet(Multiset):
     def remove_from_set(self, formula, multiplicity=None):
         return super().remove(formula, multiplicity)
 
-    def remove(self, formula, multiplicity=None, default=None):
+    def remove(self, formula, multiplicity=1, default=None):
         # Return the multiplicity of the removed formula
         self.remove_from_operators(formula, multiplicity)
         return super().remove(formula, multiplicity)
@@ -110,26 +110,33 @@ class TlSet(Multiset):
     def pop_formula(self):
         if self.operators['U']:
             selected_formula = next(iter(self.operators['U']))
-            self.operators['U'].remove(selected_formula)
+            multiplicity = self.operators['U'].remove(selected_formula)
         elif self.operators['F']:
             selected_formula = next(iter(self.operators['F']))
-            self.operators['F'].remove(selected_formula)
+            multiplicity = self.operators['F'].remove(selected_formula)
         elif self.operators['&']:
             selected_formula = next(iter(self.operators['&']))
-            self.operators['&'].remove(selected_formula)
+            multiplicity = self.operators['&'].remove(selected_formula)
         elif self.operators['G']:
             selected_formula = next(iter(self.operators['G']))
-            self.operators['G'].remove(selected_formula)
+            multiplicity = self.operators['G'].remove(selected_formula)
         elif self.operators['R']:
             selected_formula = next(iter(self.operators['R']))
-            self.operators['R'].remove(selected_formula)
+            multiplicity = self.operators['R'].remove(selected_formula)
         elif self.operators['|']:
             selected_formula = next(iter(self.operators['|']))
-            self.operators['|'].remove(selected_formula)
+            multiplicity = self.operators['|'].remove(selected_formula)
         else:  # Impossible reachable code in the application
             raise Exception("There are not valid formulas to pop", self)
         self.remove_from_set(selected_formula)
-        return selected_formula
+        return selected_formula, multiplicity
+
+    def push_formula(self, formula, multiplicity=1):
+        if formula.is_atom():
+            self.operators['L'].add(formula, multiplicity)
+        else:
+            self.operators[formula[0]].add(formula, multiplicity)
+        self.add(formula, multiplicity)
 
 
 if __name__ == '__main__':

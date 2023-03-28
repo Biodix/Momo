@@ -77,6 +77,9 @@ class Node:
 
     def pop_formula(self):
         return self.tl_set.pop_formula()
+
+    def push_formula(self, formula, multiplicity):
+        return self.tl_set.push_formula(formula, multiplicity)
     # def rollback(self, next_stage=False):
     #     self.closed_nodes.update_closed_nodes(self)
     #     self.cycles.rollback(next_stage)

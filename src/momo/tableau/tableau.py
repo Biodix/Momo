@@ -30,7 +30,7 @@ class Tableau:
             self.sat_solver = SatSolver(self)
 
     def basic_step(self):
-        formula = self.node.pop_formula()
+        formula, multiplicity = self.node.pop_formula()
         sat = False
         if formula.is_and():
             sat = self.and_expansion(formula)
@@ -46,6 +46,7 @@ class Tableau:
             sat = self.until_expansion(formula)
         else:
             raise Exception("Formula is not valid")
+        self.node.push_formula(formula, multiplicity)
         return sat
 
     def expand(self):
@@ -382,6 +383,18 @@ class Tableau:
                     added_formulas.append(element)
         return True, new_node
 
+    def sat_expansion(self, phi):
+        clauses = self.sat_solver.tl_set_to_sat(phi)
+        for model in self.sat_solver.solve(clauses):
+            tl_set = self.sat_solver.sat_to_tl_set(model)
+            for formula in tl_set:
+                self.branch.add_to_stage(formula)
+                # Augment with new stage
+            sat = self.next_stage()
+            if sat:
+                return sat
+        return False
+
     def tableau(self):
         phi = self.node.tl_set
         sat = False
@@ -394,10 +407,10 @@ class Tableau:
             # if has_cycle:
             #     return True
             if phi.is_elementary():
+                # Augment with new stage
                 sat = self.next_stage()
             else:
-                clauses = self.sat_solver.tl_set_to_sat(phi)
-
+                sat = self.sat_expansion(phi)
         else:
             sat = self.basic_step()
 
