@@ -396,7 +396,8 @@ class Tableau:
             if phi.is_elementary():
                 sat = self.next_stage()
             else:
-                pass  # SAT SOLVER
+                clauses = self.sat_solver.tl_set_to_sat(phi)
+
         else:
             sat = self.basic_step()
 
