@@ -6,11 +6,12 @@ from momo.tableau.closure import Closure
 
 
 class Node:
-    def __init__(self, tl_set: TlSet, closure: Closure, branch: Branch, operations_history: collections.deque):
+    def __init__(self, tl_set: TlSet, closure: Closure, branch: Branch, operations_history: collections.deque, marked_eventuality=None):
         self.tl_set = tl_set
         self.closure = closure
         self.branch = branch
         self.operations_history = operations_history
+        self.marked_eventuality = marked_eventuality
 
     def add(self, formula):
         if formula.is_eventually():
@@ -80,11 +81,14 @@ class Node:
 
     def push_formula(self, formula, multiplicity):
         return self.tl_set.push_formula(formula, multiplicity)
-    # def rollback(self, next_stage=False):
-    #     self.closed_nodes.update_closed_nodes(self)
-    #     self.cycles.rollback(next_stage)
-    #     self.remove_formula()
-    #     self.eventualities.rollback()
-    #     operations_stack = self.operations_stack
-    #     if not next_stage:
-    #         operations_stack.pop()
+
+    def can_apply_beta_plus(self):
+        pass
+        # def rollback(self, next_stage=False):
+        #     self.closed_nodes.update_closed_nodes(self)
+        #     self.cycles.rollback(next_stage)
+        #     self.remove_formula()
+        #     self.eventualities.rollback()
+        #     operations_stack = self.operations_stack
+        #     if not next_stage:
+        #         operations_stack.pop()

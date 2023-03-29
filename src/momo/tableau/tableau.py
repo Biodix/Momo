@@ -5,7 +5,9 @@ from momo.tableau.closure import Closure, SatTable
 from momo.tableau.node import Node
 from multiset import Multiset
 from momo.tableau.sat_solver import SatSolver
+from momo.tableau.preprocess import process_formula, read_file
 
+import time
 from collections import deque
 # for sat use enum_models()
 
@@ -411,6 +413,7 @@ class Tableau:
                 sat = self.next_stage()
             else:
                 sat = self.sat_expansion(phi)
+
         else:
             sat = self.basic_step()
 
@@ -515,6 +518,47 @@ def add_to_last_stage():
     pass
 
 
+def test_formula(test_formula):
+    formula = process_formula(test_formula)
+    tableau = Tableau(formula)
+    tableau_result = tableau.tableau()
+    del tableau
+    return tableau_result
+
+
+def test_file(file):
+    with open(file) as f:
+        input_text = f.read()
+        input_text = input_text.replace(
+            '\n\n', '\n').replace('\n', '').replace(' ', '')
+    formula = process_formula(input_text)
+    tableau = Tableau(formula)
+    tableau_result = tableau.tableau()
+    del tableau
+    return tableau_result
+
+
+def test(input_file):
+    if '.' in input_file:
+        return test_file(input_file)
+    else:
+        return test_formula(input_file)
+
+    # Done test('a&-a') # Done test('a&b&c&Gd') # Done test('a&b&G(-a)') # Done test('a|b|c') # Done
+    # test('a&b&c')
+    # test('(Fc&G-a)|(Xb&-Fb)') test('aRb&-a') test('(G((f0 > -(f1))) & -(u) & f0 & -(b0) & -(b1) & -(up) & G((u = -(
+    # X(u)))) & G(((u > ((f0 = X(f0)) & (f1 = X(f1)))) & (f0 > X((f0 | f1))) & (f1 > X((f0 | f1))))) & G(((-(u) > ((
+    # b0 = X(b0)) & (b1 = X(b1)))) & ((b0 & -(f0)) > X(b0)) & ((b1 & -(f1)) > X(b1)))) & G((((f0 & X(f0)) > (up = X(
+    # up))) & ((f1 & X(f1)) > (up = X(up))) & ((f0 & X(f1)) > up) & ((f1 & X(f0)) > -(up)))) & G((sb = (b0 | b1))) &
+    # G((((f0 & -(sb)) > (f0 U (sb | (F(f0) & -(up))))) & ((f1 & -(sb)) > (f1 U (sb | (F(f0) & -(up))))))) & G(((b0 >
+    # F(f0)) & (b1 > F(f1)))))') test_file(
+    # '/home/daniel/Escritorio/Algorithms/Momo/momo_v1.0/tableaux/test/satisfiable/s14.txt') test('(((a U z ) U b ) U
+    # c ) U ( - z ) &F z& G a& G b& F (- c)') test('(F(- d))&(G(F c))&(G(a -> (X(F e))))&(G(c -> (F a)))&(G((F e) ->
+    # d))')
+
+    # execute_file('../../benchmarks/crafted/schuppan_O1formula/O1formula200.pltl')
+
+    # execute_file('../../test/antiblack/O1formula8_modified.pltl')
 # def tableau(phi: TlSet, branch: Branch):
 #     print(phi)
 #     if phi.is_empty():

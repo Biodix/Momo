@@ -2,7 +2,7 @@
 import pytest
 from momo.tl.formula import Formula, Atom
 from momo.tl.tl_set import TlSet
-from momo.tableau.tableau import Tableau
+from momo.tableau.tableau import Tableau, test
 from multiset import Multiset, FrozenMultiset
 
 
@@ -196,3 +196,14 @@ def test_sat_tableau():
 
     tableau = Tableau(initial_formula)
     tableau.tableau()
+
+
+def test_full_tableau():
+    # assert test('a&b&c')
+    # assert not test('GFa&G-aUG-a')
+    test('''(G((f0 > -(f1))) & -(u) & f0 & -(b0) & -(b1) & -(up) & G((u = -(
+    X(u)))) & G(((u > ((f0 = X(f0)) & (f1 = X(f1)))) & (f0 > X((f0 | f1))) & (f1 > X((f0 | f1))))) & G(((-(u) > ((
+    b0 = X(b0)) & (b1 = X(b1)))) & ((b0 & -(f0)) > X(b0)) & ((b1 & -(f1)) > X(b1)))) & G((((f0 & X(f0)) > (up = X(
+    up))) & ((f1 & X(f1)) > (up = X(up))) & ((f0 & X(f1)) > up) & ((f1 & X(f0)) > -(up)))) & G((sb = (b0 | b1))) &
+    G((((f0 & -(sb)) > (f0 U (sb | (F(f0) & -(up))))) & ((f1 & -(sb)) > (f1 U (sb | (F(f0) & -(up))))))) & G(((b0 >
+    F(f0)) & (b1 > F(f1)))))''')
