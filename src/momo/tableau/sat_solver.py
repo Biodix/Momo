@@ -14,10 +14,10 @@ class SatSolver:
         clause = []
         if formula.is_or():
             for or_element in formula[1]:
-                if or_element == '1':  # Clause is True
+                if or_element == "1":  # Clause is True
                     clause = []
                     break
-                elif or_element == '0':  # Doesn't add information
+                elif or_element == "0":  # Doesn't add information
                     continue
                 else:
                     self.add_to_clause(or_element, clause)
@@ -45,7 +45,7 @@ class SatSolver:
             self.formula_to_int_map[formula] = self.n_f
             self.int_to_formula_map[self.n_f] = formula
 
-            neg_formula = self.tableau.closure[formula]['nnf']
+            neg_formula = self.tableau.closure[formula]["nnf"]
             self.formula_to_int_map[neg_formula] = -self.n_f
             self.int_to_formula_map[-self.n_f] = neg_formula
 
@@ -98,7 +98,16 @@ class SatSolver:
                 yield model
 
 
-def add_to_closure(formula, clause, formula_to_sat, sat_to_formula, sat_to_glucose, glucose_to_sat, sat_index, glucose_index):
+def add_to_closure(
+    formula,
+    clause,
+    formula_to_sat,
+    sat_to_formula,
+    sat_to_glucose,
+    glucose_to_sat,
+    sat_index,
+    glucose_index,
+):
     formula_nnf = formula.neg.nnf()
     formula_to_sat[formula] = str(sat_index)
     formula_to_sat[formula_nnf] = str(-sat_index)

@@ -3,9 +3,9 @@ from itertools import islice
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import NodeVisitor
 
-BINARY_OPERATORS = ['|', '&']
-UNARY_OPERATORS = ['G', 'X', 'F', '-']
-SPECIAL_OPERATORS = ['>', '->', 'U', 'R', '=']
+BINARY_OPERATORS = ["|", "&"]
+UNARY_OPERATORS = ["G", "X", "F", "-"]
+SPECIAL_OPERATORS = [">", "->", "U", "R", "="]
 
 
 def read_file(file):
@@ -15,8 +15,7 @@ def read_file(file):
 
 
 def reformat(formula):
-    reformatted_formula = formula.replace(
-        '\n', '').replace(' ', '').replace('!', '-')
+    reformatted_formula = formula.replace("\n", "").replace(" ", "").replace("!", "-")
     return reformatted_formula
 
 
@@ -57,7 +56,7 @@ def bin_to_n(formula):
 
     operator = formula[0]
     out = [operator]
-    if operator == '-' and get_operator(formula[1]) == operator:
+    if operator == "-" and get_operator(formula[1]) == operator:
         return bin_to_n(formula[1][1])
     if operator in SPECIAL_OPERATORS:
         return Formula((operator, bin_to_n(formula[1]), bin_to_n(formula[2])))
@@ -65,15 +64,15 @@ def bin_to_n(formula):
     for node in islice(formula, 1, None):
         flat_node = bin_to_n(node)
         op_flat_node = get_operator(flat_node)
-        if op_flat_node != operator or (op_flat_node == 'X' and operator == 'X'):
+        if op_flat_node != operator or (op_flat_node == "X" and operator == "X"):
             out.append(flat_node)
         else:
-            if get_operator(out) == '|' or get_operator(out) == '&':
+            if get_operator(out) == "|" or get_operator(out) == "&":
                 out.extend(flat_node[1])
             else:
                 out.extend(islice(flat_node, 1, None))
     out_op = get_operator(out)
-    if out_op == '|' or out_op == '&':
+    if out_op == "|" or out_op == "&":
         return Formula([out_op, frozenset(islice(out, 1, None))])
     else:
         return Formula(out)
@@ -100,7 +99,7 @@ class Evaluator(NodeVisitor):
 
 def parse_formula(text):
     # The lower the higher the precedence
-    grammar = '''\
+    grammar = """\
             exprIMP = (exprOR (">" / "->" / "=") exprIMP) / exprOR
             exprOR = (exprAND "|" exprOR) / exprAND
             exprAND = (exprBIN "&" exprAND) / exprBIN
@@ -112,14 +111,15 @@ def parse_formula(text):
             exprTERM = "true" / "false" / "1" / "0" /var
             var = ~"(([a-z_AP]|(G\d+))+\d*(\_\d*)?)"
             _ = ~"\s*"
-    '''
+    """
     try:
-        parsed_text = Evaluator(grammar, text.replace(
-            "\t", "").replace(" ", "").replace("fUll", "full")).op
+        parsed_text = Evaluator(
+            grammar, text.replace("\t", "").replace(" ", "").replace("fUll", "full")
+        ).op
         if not isinstance(text, list):
             parsed_text = parsed_text
     except Exception as e:
-        print('Failed at: ' + str(e))
+        print("Failed at: " + str(e))
         parsed_text = None
         exit(0)
     return parsed_text

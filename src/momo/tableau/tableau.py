@@ -9,6 +9,7 @@ from momo.tableau.preprocess import process_formula, read_file
 
 import time
 from collections import deque
+
 # for sat use enum_models()
 
 
@@ -18,8 +19,7 @@ class Tableau:
             self.closure = Closure(initial_formula)
             initial_set = TlSet([initial_formula])
             self.branch = Branch(initial_set)
-            self.node = Node(initial_set,
-                             self.closure, self.branch, deque())
+            self.node = Node(initial_set, self.closure, self.branch, deque())
             self.sat_solver = SatSolver(self)
         elif isinstance(initial_formula, list):
             self.closure = Closure()
@@ -27,8 +27,7 @@ class Tableau:
                 self.closure.build_closure(formula)
             initial_set = TlSet(initial_formula)
             self.branch = Branch(initial_set)
-            self.node = Node(initial_set,
-                             self.closure, self.branch, deque())
+            self.node = Node(initial_set, self.closure, self.branch, deque())
             self.sat_solver = SatSolver(self)
 
     def basic_step(self):
@@ -98,7 +97,7 @@ class Tableau:
             added_formulas (List): List of added formulas to remove in case of closed node.
         """
         added_formula = []
-        if '0' in formula:
+        if "0" in formula:
             return False, added_formula
         for element in formula[1]:
             if not self.node.contradicts(element):
@@ -134,7 +133,7 @@ class Tableau:
 
     def _always_expansion(self, formula):
         """
-        Expands the given formula and returns a tuple with a boolean indicating whether the formula 
+        Expands the given formula and returns a tuple with a boolean indicating whether the formula
         can be expanded and a list of added formulas.
 
         Args:
@@ -144,8 +143,8 @@ class Tableau:
             A tuple of a boolean indicating whether the formula can be expanded and a list of added formulas.
         """
         phi = formula[1]
-        next_phi = formula.add_operator('X')
-        if phi == '0':
+        next_phi = formula.add_operator("X")
+        if phi == "0":
             return False, []
         if self.node.contradicts(phi):
             return False, []
@@ -171,7 +170,7 @@ class Tableau:
             return element
 
     def or_expansion(self, formula):
-        if '1' in formula[1]:
+        if "1" in formula[1]:
             return True
 
         for element in formula[1]:
@@ -189,7 +188,8 @@ class Tableau:
     ##########################################
     def release_expansion(self, formula):
         can_left_expand, left_expand_added_formulas = self._release_expansion_left(
-            formula)
+            formula
+        )
         if can_left_expand:
             sat = self.tableau()
             if sat:
@@ -197,7 +197,8 @@ class Tableau:
         self.rollback(left_expand_added_formulas)
 
         can_right_expand, right_expand_added_formulas = self._release_expansion_right(
-            formula)
+            formula
+        )
         if can_right_expand:
             sat = self.tableau()
             if sat:
@@ -224,7 +225,7 @@ class Tableau:
     def _release_expansion_right(self, formula):
         phi = formula[1]
         psi = formula[2]
-        next_of_formula = formula.add_operator('X')
+        next_of_formula = formula.add_operator("X")
         added_formulas = []
         if self.node.contradicts(psi):
             return False, added_formulas
@@ -245,7 +246,7 @@ class Tableau:
         phi = formula[1]
         added_formulas = []
 
-        if phi == '0':
+        if phi == "0":
             return False, added_formulas
         if self.node.contradicts(phi):
             return False, added_formulas
@@ -256,7 +257,7 @@ class Tableau:
             return True, added_formulas
 
     def _eventually_expansion_right(self, formula):
-        next_of_formula = formula.add_operator('X')
+        next_of_formula = formula.add_operator("X")
         added_formulas = []
         if self.node.contradicts(next_of_formula):
             return False, added_formulas
@@ -268,7 +269,8 @@ class Tableau:
     def eventually_expansion(self, formula):
         ev_formula = formula[1]
         can_left_expand, left_expand_added_formulas = self._eventually_expansion_left(
-            formula)
+            formula
+        )
         if can_left_expand:
             fulfilled = self.branch.fulfill_eventuality(ev_formula)
             sat = self.tableau()
@@ -279,8 +281,10 @@ class Tableau:
 
         self.rollback(left_expand_added_formulas)
 
-        can_right_expand, right_expand_added_formulas = self._eventually_expansion_right(
-            formula)
+        (
+            can_right_expand,
+            right_expand_added_formulas,
+        ) = self._eventually_expansion_right(formula)
         if can_right_expand:
             sat = self.tableau()
             if sat:
@@ -295,7 +299,7 @@ class Tableau:
     def _until_expansion_left(self, formula):
         psi = formula[2]
         added_formulas = []
-        if psi == '0':
+        if psi == "0":
             return False, added_formulas
         if self.node.contradicts(psi):
             return False, added_formulas
@@ -307,7 +311,7 @@ class Tableau:
 
     def _until_expansion_right(self, formula):
         phi = formula[1]
-        next_of_formula = formula.add_operator('X')
+        next_of_formula = formula.add_operator("X")
         added_formulas = []
         if self.node.contradicts(phi):
             return False, added_formulas
@@ -324,7 +328,8 @@ class Tableau:
     def until_expansion(self, formula):
         ev_formula = formula[2]
         can_left_expand, left_expand_added_formulas = self._until_expansion_left(
-            formula)
+            formula
+        )
         if can_left_expand:
             fulfilled = self.branch.fulfill_eventuality(ev_formula)
             sat = self.tableau()
@@ -335,7 +340,8 @@ class Tableau:
         self.rollback(left_expand_added_formulas)
 
         can_right_expand, right_expand_added_formulas = self._until_expansion_right(
-            formula)
+            formula
+        )
         if can_right_expand:
             sat = self.tableau()
             if sat:
@@ -369,12 +375,11 @@ class Tableau:
         # Creation of new node
         new_node: Node = self.node.new_node()
         added_formulas = []
-        for next_element in self.node.tl_set.operators['X']:
+        for next_element in self.node.tl_set.operators["X"]:
             element = next_element[1]
             if element.is_and():
                 # If the element is an and, we try to add directly the and elements
-                can_expand, added_formulas = new_node._node_and_expansion(
-                    element)
+                can_expand, added_formulas = new_node._node_and_expansion(element)
                 if not can_expand:
                     return False, self.node
             else:
@@ -529,8 +534,7 @@ def test_formula(test_formula):
 def test_file(file):
     with open(file) as f:
         input_text = f.read()
-        input_text = input_text.replace(
-            '\n\n', '\n').replace('\n', '').replace(' ', '')
+        input_text = input_text.replace("\n\n", "\n").replace("\n", "").replace(" ", "")
     formula = process_formula(input_text)
     tableau = Tableau(formula)
     tableau_result = tableau.tableau()
@@ -538,8 +542,8 @@ def test_file(file):
     return tableau_result
 
 
-def test(input_file):
-    if '.' in input_file:
+def execute_tableau(input_file):
+    if "." in input_file:
         return test_file(input_file)
     else:
         return test_formula(input_file)
@@ -559,6 +563,8 @@ def test(input_file):
     # execute_file('../../benchmarks/crafted/schuppan_O1formula/O1formula200.pltl')
 
     # execute_file('../../test/antiblack/O1formula8_modified.pltl')
+
+
 # def tableau(phi: TlSet, branch: Branch):
 #     print(phi)
 #     if phi.is_empty():

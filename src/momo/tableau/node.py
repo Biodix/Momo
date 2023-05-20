@@ -6,7 +6,14 @@ from momo.tableau.closure import Closure
 
 
 class Node:
-    def __init__(self, tl_set: TlSet, closure: Closure, branch: Branch, operations_history: collections.deque, marked_eventuality=None):
+    def __init__(
+        self,
+        tl_set: TlSet,
+        closure: Closure,
+        branch: Branch,
+        operations_history: collections.deque,
+        marked_eventuality=None,
+    ):
         self.tl_set = tl_set
         self.closure = closure
         self.branch = branch
@@ -32,7 +39,7 @@ class Node:
     def contradicts(self, formula: Formula):
         # if formula not in self.closure:
         #     return False
-        nnf_neg_formula = self.closure[formula]['nnf']
+        nnf_neg_formula = self.closure[formula]["nnf"]
         if nnf_neg_formula in self.tl_set:
             # self.traces.contradiction(formula, nnf_neg_formula)
             return True
@@ -51,7 +58,7 @@ class Node:
             added_formulas (List): List of added formulas to remove in case of closed node.
         """
         added_formula = []
-        if '0' in formula:
+        if "0" in formula:
             return False, added_formula
         for element in formula[1]:
             if not self.contradicts(element):
@@ -71,9 +78,11 @@ class Node:
         branch_remaining_eventualities = self.branch.remaining_eventualities.copy()
         branch_fulfilled_eventualities = self.branch.fulfilled_eventualities.copy()
         branch_literals = self.branch.literals.copy()
-        new_branch = Branch(remaining_eventualities=branch_remaining_eventualities,
-                            fulfilled_eventualities=branch_fulfilled_eventualities,
-                            literals=branch_literals)
+        new_branch = Branch(
+            remaining_eventualities=branch_remaining_eventualities,
+            fulfilled_eventualities=branch_fulfilled_eventualities,
+            literals=branch_literals,
+        )
         return Node(TlSet(), self.closure, new_branch, self.operations_history)
 
     def pop_formula(self):

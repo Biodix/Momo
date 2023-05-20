@@ -4,10 +4,15 @@ def and_rollback(node, updated_elements):
 
 
 def and_expansion(self, formula, node):
-    self.traces.path.add_rule('And expansion')
+    self.traces.path.add_rule("And expansion")
     self.traces.path.add_selected_formula(formula)
-    if '0' in formula:
-        return False, ('false', formula, node.set_of_formulae.copy().union(formula), False)
+    if "0" in formula:
+        return False, (
+            "false",
+            formula,
+            node.set_of_formulae.copy().union(formula),
+            False,
+        )
     updated_elements = []
     for element in formula[1]:
         if not node.contradicts(element):
@@ -15,7 +20,12 @@ def and_expansion(self, formula, node):
             updated_elements.append(element)
         else:
             and_rollback(node, updated_elements)
-            return False, ('contradiction', formula, node.set_of_formulae.copy().union(formula), element)
+            return False, (
+                "contradiction",
+                formula,
+                node.set_of_formulae.copy().union(formula),
+                element,
+            )
     sat, proof = self.tableau.solve()
     if sat:
         return True, 1

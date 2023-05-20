@@ -3,7 +3,13 @@ from multiset import Multiset
 
 
 class Branch(list):
-    def __init__(self, initial_set=None, remaining_eventualities=(), fulfilled_eventualities=(), literals=()):
+    def __init__(
+        self,
+        initial_set=None,
+        remaining_eventualities=(),
+        fulfilled_eventualities=(),
+        literals=(),
+    ):
         super().__init__()
         self.append(Multiset())
         self.remaining_eventualities = TlSet(remaining_eventualities)
